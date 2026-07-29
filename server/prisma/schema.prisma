@@ -1,0 +1,63 @@
+// Prisma schema — AI Insemination Management Platform
+// Domain models are introduced module-by-module per docs/phases.md.
+// Phase 2 adds: Role, User, OtpCode, RefreshToken.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  FARMER
+  TECHNICIAN
+}
+
+model User {
+  id        String   @id @default(cuid())
+  phone     String
+  role      Role
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  otpCodes      OtpCode[]
+  refreshTokens RefreshToken[]
+
+  // A phone number may belong to at most one account per role (e.g. the
+  // same person cannot be two farmers, but a phone is scoped to a role
+  // since the three apps are independent and never share an identity).
+  @@unique([phone, role])
+  @@map("users")
+}
+
+model OtpCode {
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  codeHash   String
+  attempts   Int       @default(0)
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([userId])
+  @@map("otp_codes")
+}
+
+model RefreshToken {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}

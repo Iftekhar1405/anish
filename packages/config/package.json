@@ -1,0 +1,19 @@
+{
+  "name": "@ai-platform/config",
+  "private": true,
+  "version": "0.0.0",
+  "main": "index.js",
+  "files": [
+    "tsconfig.base.json",
+    "tsconfig.react-native.json",
+    "eslint-preset.js",
+    "tailwind-preset.js"
+  ],
+  "dependencies": {
+    "@typescript-eslint/eslint-plugin": "^8.15.0",
+    "@typescript-eslint/parser": "^8.15.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-react": "^7.37.2",
+    "eslint-plugin-react-hooks": "^5.0.0"
+  }
+}
