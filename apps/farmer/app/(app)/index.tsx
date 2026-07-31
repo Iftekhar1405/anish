@@ -1,5 +1,6 @@
 import { Pressable, Text, View } from "react-native";
 import { useAuth } from "../../src/providers/AuthProvider";
+import { DevGalleryLink } from "../../src/components/DevGalleryLink";
 
 export default function FarmerHome() {
   const { user, logout } = useAuth();
@@ -17,6 +18,7 @@ export default function FarmerHome() {
       >
         <Text className="text-base font-semibold text-neutral-900">Log out</Text>
       </Pressable>
+      <DevGalleryLink />
     </View>
   );
 }
