@@ -19,28 +19,27 @@
 
 ## Current Status  *(overwrite each session — single source of truth)*
 
-- **Phase:** Phase 1 — Foundation & Infrastructure **in progress** (reset-fresh rebuild). Backend slice ✅ done + verified; frontend slice pending.
-- **Branch / PR:** docs on `docs/planning-refactor` (PR open, unmerged); Phase 1 work on `phase-1-foundation` (stacked on docs).
-- **Health:** 🟢 Backend green — `GET /api/v1/health` → `{status:ok, database:connected}` against Supabase.
-- **Decision:** **Reset code fresh** — earlier OTP/Docker/Expo-Web scaffold being removed and rebuilt to the new plan.
+- **Phase:** Phase 1 — Foundation & Infrastructure — **code-complete**; only the on-device app-boot check remains (needs a simulator).
+- **Branch / PR:** docs on `docs/planning-refactor` (PR open, unmerged); Phase 1 work on `phase-1-foundation` (stacked on docs, **local — not pushed**).
+- **Health:** 🟢 Backend green (`GET /api/v1/health` ok); all three apps typecheck clean.
+- **Decision:** **Reset code fresh** — earlier OTP/Docker/Expo-Web scaffold removed and rebuilt to the new plan.
 - **Last updated by:** Amaan Ali · **Date:** 2026-08-02
-- **One-line summary:** Backend reset to a clean, verified foundation on Supabase. Next: reset the three Expo apps (and later the shared packages) to Phase 1 shells that boot.
+- **One-line summary:** Backend + three Expo app shells reset and verified (typecheck + health). Run each app on a simulator to close Phase 1, then start Phase 2 (phone+password auth).
 
 ---
 
 ## In Progress (WIP)
 
 - **Backend foundation — DONE + verified** (commits `d3f0046`, `bb75be7`): removed Docker; Supabase env; purged OTP auth module, `admin-users`, old migrations/seed; minimal Prisma schema (no domain models); `app.module` = Config+Prisma+Health; `main.ts` drops CORS. Verified `GET /api/v1/health` green against Supabase. Set your own `server/.env` `DATABASE_URL` to run it (gitignored).
-- **Frontend reset — NOT started.** The three Expo apps still contain old-plan code (OTP login screens, feature modules, AuthProvider). The four shared packages (`api-client`, `ui`, `types`, `config`) also carry old-plan surface (OTP auth API). Plan: reduce each app to a minimal Phase 1 shell (boots + pings `/health`), keeping neutral Expo/NativeWind config; defer package auth/ui resets to Phases 2–3 as those features arrive.
+- **Frontend shells — DONE (commit `950748a`).** Each app reduced to a minimal Phase 1 shell: root `_layout` (QueryClientProvider + SafeArea + Stack) + `app/index.tsx` home that pings `/health` and shows API/DB status. Old OTP screens/AuthProvider/feature modules/app-local lib removed. All three **typecheck clean**. Shared-package (`api-client`, `ui`, `types`, `config`) auth/UI reset intentionally deferred to Phases 2–3.
+- **Remaining for Phase 1:** run each app on a simulator (`pnpm --filter <app> start`) and confirm the home screen shows `API ok · DB connected`. Needs a dev machine — can't be done from the agent environment.
 
 ---
 
 ## Next Steps  *(ordered queue — do the top one)*
 
-1. **Reset the three Expo apps to Phase 1 shells:** remove `app/(app)`, `app/(auth)`, `src/features`, `src/providers`; add a minimal `app/_layout.tsx` (QueryClientProvider + SafeArea + Stack) and `app/index.tsx` home that pings `/health`. Typecheck each.
-2. **Verify apps boot** on a simulator (`pnpm --filter <app> start`) — needs a dev machine/simulator.
-3. Close out Phase 1; update this file + memory.
-4. Then Phase 2 — Auth (phone + password): new Prisma `User`/`RefreshToken`, `/auth/login`+`/auth/refresh`, login screens, reset `api-client` auth surface.
+1. **Boot check (human):** `pnpm --filter admin start` (then `farmer`, `technician`) on a simulator; confirm the home screen shows `API ok · DB connected`. Start the server first (`pnpm --filter server start:dev`). Closes Phase 1.
+2. **Phase 2 — Auth (phone + password):** Prisma `User`(+password_hash, `@@unique([phone, role])`)/`RefreshToken`; `POST /auth/login` + `/auth/refresh`; roles guard; reset `packages/api-client` auth surface (drop OTP); login screens + secure token storage in each app.
 
 ---
 
@@ -76,6 +75,11 @@ See `architecture.md` §14 (Local Setup) for detail.
 ---
 
 ## Handoff Log  *(append newest on top; keep entries short)*
+
+### 2026-08-02 — Amaan Ali (4)
+- **Did:** Reset the three Expo apps to clean Phase 1 shells (minimal `_layout` + `/health`-pinging home). All three typecheck clean (commit `950748a`).
+- **State:** 🟢 Phase 1 code-complete. Only the on-simulator boot check remains.
+- **Next:** Human runs each app on a simulator to confirm boot; then Phase 2 (phone+password auth).
 
 ### 2026-08-02 — Amaan Ali (3)
 - **Did:** Reset backend to clean foundation on Supabase (purged OTP auth/admin-users/old migrations; minimal schema; Config+Prisma+Health). **Verified `GET /api/v1/health` green** against Supabase (commits `d3f0046`, `bb75be7`).
