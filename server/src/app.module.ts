@@ -8,6 +8,10 @@ import { PrismaModule } from './prisma/prisma.module';
 import { HealthModule } from './health/health.module';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
+import { BreedsModule } from './breeds/breeds.module';
+import { OrganizationsModule } from './organizations/organizations.module';
+import { DistrictsModule } from './districts/districts.module';
+import { ServiceAreasModule } from './service-areas/service-areas.module';
 
 @Module({
   imports: [
@@ -16,6 +20,10 @@ import { UsersModule } from './users/users.module';
     HealthModule,
     AuthModule,
     UsersModule,
+    BreedsModule,
+    OrganizationsModule,
+    DistrictsModule,
+    ServiceAreasModule,
   ],
   controllers: [AppController],
   providers: [

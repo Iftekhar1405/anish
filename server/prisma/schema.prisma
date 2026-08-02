@@ -1,6 +1,6 @@
 // Prisma schema — AI Insemination Management Platform
 // Domain models are introduced module-by-module per docs/phases.md.
-// Phase 1: connection only. Phase 2: phone + password auth (User, RefreshToken).
+// Phase 1: connection. Phase 2: auth (User, RefreshToken). Phase 4: master data.
 
 generator client {
   provider = "prisma-client-js"
@@ -17,6 +17,24 @@ enum Role {
   TECHNICIAN
 }
 
+enum Species {
+  CATTLE
+  GOAT
+}
+
+enum FertilityRating {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum AnimalBreedingStatus {
+  OPEN
+  INSEMINATED
+  PREGNANT
+  CALVED
+}
+
 model User {
   id           String   @id @default(cuid())
   phone        String
@@ -28,9 +46,8 @@ model User {
   updatedAt    DateTime @updatedAt
 
   refreshTokens RefreshToken[]
+  animals       Animal[]
 
-  // A phone is scoped to a role: the same person may exist as at most one
-  // account per role, and the three apps never share an identity.
   @@unique([phone, role])
   @@map("users")
 }
@@ -46,4 +63,131 @@ model RefreshToken {
 
   @@index([userId])
   @@map("refresh_tokens")
+}
+
+model Breed {
+  id        String   @id @default(cuid())
+  species   Species
+  name      String
+  code      String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  sires   SireCatalogue[]
+  animals Animal[]
+
+  @@unique([species, name])
+  @@map("breeds")
+}
+
+model Organization {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  code      String?
+  contact   String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  sires SireCatalogue[]
+
+  @@map("organizations")
+}
+
+model District {
+  id        String   @id @default(cuid())
+  name      String
+  state     String
+  code      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  serviceAreas ServiceArea[]
+
+  @@unique([state, name])
+  @@map("districts")
+}
+
+model ServiceArea {
+  id         String   @id @default(cuid())
+  name       String
+  districtId String
+  district   District @relation(fields: [districtId], references: [id], onDelete: Restrict)
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([districtId, name])
+  @@index([districtId])
+  @@map("service_areas")
+}
+
+model SireCatalogue {
+  id              String          @id @default(cuid())
+  species         Species
+  name            String
+  breedId         String
+  breed           Breed           @relation(fields: [breedId], references: [id], onDelete: Restrict)
+  organizationId  String?
+  organization    Organization?   @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  fertilityRating FertilityRating
+  diseaseFree     Boolean         @default(true)
+  strawPriceMinor Int
+  isAvailable     Boolean         @default(true)
+  imageUrl        String?
+  imagePublicId   String?
+
+  // Cattle (Bull) specific
+  geneticScore       Float?
+  milkYieldPotential Int?
+  fatPct             Float?
+
+  // Goat (Buck) specific
+  growthIndex Float?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  batches Batch[]
+
+  @@index([species])
+  @@index([breedId])
+  @@map("sire_catalogue")
+}
+
+model Batch {
+  id                String        @id @default(cuid())
+  sireId            String
+  sire              SireCatalogue @relation(fields: [sireId], references: [id], onDelete: Cascade)
+  batchNumber       String
+  producedOn        DateTime?
+  notes             String?
+  quantityTotal     Int           @default(0)
+  quantityAvailable Int           @default(0)
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  @@unique([sireId, batchNumber])
+  @@index([sireId])
+  @@map("batches")
+}
+
+model Animal {
+  id             String               @id @default(cuid())
+  farmerId       String
+  farmer         User                 @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+  species        Species
+  breedId        String?
+  breed          Breed?               @relation(fields: [breedId], references: [id], onDelete: SetNull)
+  tag            String
+  ageMonths      Int?
+  breedingStatus AnimalBreedingStatus @default(OPEN)
+  isActive       Boolean              @default(true)
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+
+  @@unique([farmerId, tag])
+  @@index([farmerId])
+  @@map("animals")
 }
