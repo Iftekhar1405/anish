@@ -4,3 +4,4 @@ export * from "./role";
 export * from "./auth";
 export * from "./pagination";
 export * from "./users";
+export * from "./masters";

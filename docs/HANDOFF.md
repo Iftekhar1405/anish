@@ -19,30 +19,30 @@
 
 ## Current Status  *(overwrite each session — single source of truth)*
 
-- **Phase:** Phases 1–3 ✅ done & verified on device. **Phase 4 — Master Data — backend done (4A–4D ✅); only 4E (admin screens) remains.**
+- **Phase:** Phases 1–3 ✅ done & verified on device. **Phase 4 — Master Data — CODE-COMPLETE (4A–4E ✅); pending device verification by Amaan.**
 - **Branch / PR:** `phase-4-master-data` (**local — not pushed**).
-- **Health:** 🟢 Green — all Phase 4 backend modules verified via curl against Supabase; Cloudinary signing verified with real creds.
-- **Decision:** **Reset code fresh**; `packages/ui` reused as-is. Phase 4: price stored as a field on the sire catalogue (no separate price-history table for now); farmers/technicians are `User` rows by role. Cloudinary uploads are **backend-signed** — client requests a signature at `POST /uploads/signature`, then uploads directly to Cloudinary (secret never leaves server).
+- **Health:** 🟢 Green — all Phase 4 backend verified via curl; admin 4E screens typecheck clean (all 4 workspaces). Not yet run on a simulator.
+- **Decision:** **Reset code fresh**; `packages/ui` reused as-is. Phase 4: price stored as a field on the sire catalogue (no separate price-history table for now); farmers/technicians are `User` rows by role. Cloudinary uploads are **backend-signed** — client requests a signature at `POST /uploads/signature`, then uploads directly to Cloudinary (secret never leaves server). Master screens live under a **Masters** tab → hub → per-master screens (Expo Router nested Stack).
 - **Last updated by:** Amaan Ali · **Date:** 2026-08-02
-- **One-line summary:** All Phase 4 backend done & curl-verified (reference masters + catalogue + inventory + Cloudinary + animals). Remaining: 4E admin screens.
+- **One-line summary:** Phase 4 code-complete. Backend curl-verified; admin master-data screens (7 masters + Cloudinary image picker) built & typecheck-clean. Needs a simulator pass to close the phase.
 
 ---
 
 ## In Progress (WIP)
 
-- **Phase 4 — Master Data — 4A+4B+4C+4D done; only 4E remains.** Branch `phase-4-master-data`.
+- **Phase 4 — Master Data — 4A–4E code-complete; pending device verification.** Branch `phase-4-master-data`.
   - ✅ **4A** (`734452b`): Prisma models (Breed, Organization, District, ServiceArea, SireCatalogue, Batch, Animal + enums) migrated to Supabase. Shared `common/pagination` + `@AdminOnly()`.
   - ✅ **4B** (`734452b`): admin CRUD for breeds/organizations/districts/service-areas — **verified via curl** (CRUD + 409/404/401/400).
   - ✅ **4C**: catalogue (SireCatalogue, Bull/Buck fields) + inventory (Batch, per-batch quantity) admin CRUD + **Cloudinary signed-upload** endpoint (`POST /uploads/signature`, `@AdminOnly()`). **Verified via curl** — catalogue CRUD (404 bad breed, 400 validation), batch CRUD (409 dup, 404 bad sire, 400 available>total on create & patch), and a real Cloudinary signature. Creds live in gitignored `server/.env` (`CLOUDINARY_*`), `cloudinary` SDK added.
   - ✅ **4D**: animals admin CRUD (farmer-owned via `farmerId`). **Verified via curl** — create/list(filter)/get/patch, 409 dup tag per farmer, 404 bad/unknown farmer, **400 when owner isn't a FARMER** (role checked in service), 401 unauth.
-  - ⬜ **4E** admin screens for all masters (catalogue/inventory/animals/breeds/orgs/districts/service-areas) + Cloudinary image picker on sires.
+  - ✅ **4E**: admin master-data screens (typecheck-clean, **not yet run on simulator**). New **Masters** tab → hub (`app/(app)/masters/index.tsx`) → per-master screens: breeds, organizations, districts, service-areas, catalogue, batches, animals. Shared types + zod form schemas in `packages/types/src/masters.ts` (input/output types for RHF transforms); feature layer `apps/admin/src/features/masters/` (api.ts, hooks.ts CRUD factory, upload.ts). **Cloudinary image picker** on the sire form uses `expo-image-picker` → `POST /uploads/signature` → direct upload. `expo-image-picker` plugin added to `app.json`.
   - Scope: straws = per-`Batch` quantity (no straw rows); straw price = `SireCatalogue` field.
 
 ---
 
 ## Next Steps  *(ordered queue — do the top one)*
 
-1. **Phase 4 · 4E:** admin screens for catalogue/inventory/animals/breeds/orgs/districts/service-areas — including a Cloudinary image picker that calls `POST /uploads/signature` then uploads directly, storing `imageUrl`/`imagePublicId` on the sire. This closes Phase 4.
+1. **Verify Phase 4 · 4E on a simulator** (Amaan): open the admin app → **Masters** tab → walk each of the 7 screens (create/edit, filters, and a Cloudinary image upload on a sire). Report pass/fail. That closes Phase 4.
 2. **Then Phase 5 — Farmer App** (per `phases.md`).
 
 ---
@@ -79,6 +79,11 @@ See `architecture.md` §14 (Local Setup) for detail.
 ---
 
 ## Handoff Log  *(append newest on top; keep entries short)*
+
+### 2026-08-02 — Amaan Ali (14)
+- **Did:** Phase 4 · 4E — admin master-data UI. Added a **Masters** tab + hub and 7 CRUD screens (breeds, organizations, districts, service-areas, catalogue, batches, animals) reusing `packages/ui`. Shared master types + zod schemas in `packages/types`; `apps/admin/src/features/masters/` (api + CRUD-factory hooks + Cloudinary upload helper). Sire form has a working **image picker** (`expo-image-picker` → signature → direct Cloudinary upload). Typecheck clean across types/admin/farmer/technician.
+- **State:** 🟢 Phase 4 code-complete. Admin master screens not yet run on a simulator.
+- **Next:** Amaan runs the admin app on a simulator to verify 4E; then Phase 5 (Farmer App).
 
 ### 2026-08-02 — Amaan Ali (13)
 - **Did:** Phase 4 · 4D — animals admin CRUD (`@AdminOnly()`), farmer-owned with a service-level guard that the owner is a FARMER. Typecheck clean; **verified via curl** (CRUD + filters + 409/404/400/401).

@@ -12,7 +12,7 @@ Production-grade Artificial Insemination management platform for **cattle and go
 
 ## 2. Current Phase
 
-**Phases 1–3 ✅ done & verified on device.** **Phase 4 — Master Data — in progress** on `phase-4-master-data`; backend done through **4D** (reference masters + catalogue + inventory + Cloudinary signing + animals, all curl-verified). `packages/ui` reused as-is (design.md-aligned). Phase 4 notes: straw price stored as a field on the sire catalogue (no separate price-history table for now); straws = per-`Batch` quantity (no straw rows). Cloudinary uploads are **backend-signed** — `POST /uploads/signature` returns a signature; the client uploads directly so the API secret never ships. Remaining: 4E admin screens (closes Phase 4). See `HANDOFF.md`.
+**Phases 1–3 ✅ done & verified on device.** **Phase 4 — Master Data — CODE-COMPLETE** on `phase-4-master-data` (4A–4E); pending a simulator pass to close it. Backend (4A–4D) all curl-verified; admin master-data UI (4E) typecheck-clean across all workspaces. `packages/ui` reused as-is (design.md-aligned). Phase 4 notes: straw price stored as a field on the sire catalogue (no separate price-history table for now); straws = per-`Batch` quantity (no straw rows). Cloudinary uploads are **backend-signed** — `POST /uploads/signature` returns a signature; the client uploads directly (via `expo-image-picker`) so the API secret never ships. Admin master screens sit under a **Masters** tab → hub → 7 per-master screens. See `HANDOFF.md`.
 
 ---
 

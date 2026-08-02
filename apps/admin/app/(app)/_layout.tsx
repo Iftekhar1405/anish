@@ -1,5 +1,5 @@
 import { Redirect, Tabs, type Href } from "expo-router";
-import { LayoutDashboard, Users, Wrench } from "lucide-react-native";
+import { Database, LayoutDashboard, Users, Wrench } from "lucide-react-native";
 import { useAuth } from "../../src/auth/AuthProvider";
 
 export default function AppLayout() {
@@ -36,6 +36,16 @@ export default function AppLayout() {
         options={{
           title: "Technicians",
           tabBarIcon: ({ color, size }) => <Wrench color={color} size={size} />,
+        }}
+      />
+      <Tabs.Screen
+        name="masters"
+        options={{
+          title: "Masters",
+          headerShown: false,
+          tabBarIcon: ({ color, size }) => (
+            <Database color={color} size={size} />
+          ),
         }}
       />
     </Tabs>
