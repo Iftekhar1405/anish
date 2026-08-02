@@ -19,33 +19,34 @@
 
 ## Current Status  *(overwrite each session — single source of truth)*
 
-- **Phase:** Phase 1 — Foundation & Infrastructure **in progress** (reset-fresh rebuild).
+- **Phase:** Phase 1 — Foundation & Infrastructure **in progress** (reset-fresh rebuild). Backend slice ✅ done + verified; frontend slice pending.
 - **Branch / PR:** docs on `docs/planning-refactor` (PR open, unmerged); Phase 1 work on `phase-1-foundation` (stacked on docs).
-- **Health:** 🟡 Blocked — waiting on a Supabase `DATABASE_URL` to run migrations + verify.
-- **Decision:** **Reset code fresh** — the earlier OTP/Docker/Expo-Web scaffold is being removed and rebuilt to the new plan.
+- **Health:** 🟢 Backend green — `GET /api/v1/health` → `{status:ok, database:connected}` against Supabase.
+- **Decision:** **Reset code fresh** — earlier OTP/Docker/Expo-Web scaffold being removed and rebuilt to the new plan.
 - **Last updated by:** Amaan Ali · **Date:** 2026-08-02
-- **One-line summary:** Started Phase 1 on a clean-slate basis: removed Docker Postgres, switched env to Supabase. Old app/server code still present pending the rebuild (needs Supabase URL).
+- **One-line summary:** Backend reset to a clean, verified foundation on Supabase. Next: reset the three Expo apps (and later the shared packages) to Phase 1 shells that boot.
 
 ---
 
 ## In Progress (WIP)
 
-- **Phase 1 reset-fresh rebuild.** Done so far on `phase-1-foundation`: removed `docker/` (Supabase replaces local Docker Postgres); rewrote `server/.env.example` for Supabase + phone-password + Cloudinary (OTP/FCM/Maps commented as later phases).
-- **Still to do (blocked on Supabase URL):** remove old-plan code (`server/src/auth` OTP module, `server/src/admin-users`, OTP Prisma models, old app screens/CORS); stand up a clean NestJS (health + Prisma) against Supabase; re-scaffold the three Expo apps; verify `GET /api/v1/health` + apps boot.
+- **Backend foundation — DONE + verified** (commits `d3f0046`, `bb75be7`): removed Docker; Supabase env; purged OTP auth module, `admin-users`, old migrations/seed; minimal Prisma schema (no domain models); `app.module` = Config+Prisma+Health; `main.ts` drops CORS. Verified `GET /api/v1/health` green against Supabase. Set your own `server/.env` `DATABASE_URL` to run it (gitignored).
+- **Frontend reset — NOT started.** The three Expo apps still contain old-plan code (OTP login screens, feature modules, AuthProvider). The four shared packages (`api-client`, `ui`, `types`, `config`) also carry old-plan surface (OTP auth API). Plan: reduce each app to a minimal Phase 1 shell (boots + pings `/health`), keeping neutral Expo/NativeWind config; defer package auth/ui resets to Phases 2–3 as those features arrive.
 
 ---
 
 ## Next Steps  *(ordered queue — do the top one)*
 
-1. **Provide a Supabase `DATABASE_URL`** (create project → paste here or into `server/.env`). Blocks everything below.
-2. **Finish Phase 1 rebuild:** purge old-plan code, clean NestJS (health + Prisma) on Supabase, re-scaffold the three Expo apps, verify health + boots.
-3. Then Phase 2 — Auth (phone + password).
+1. **Reset the three Expo apps to Phase 1 shells:** remove `app/(app)`, `app/(auth)`, `src/features`, `src/providers`; add a minimal `app/_layout.tsx` (QueryClientProvider + SafeArea + Stack) and `app/index.tsx` home that pings `/health`. Typecheck each.
+2. **Verify apps boot** on a simulator (`pnpm --filter <app> start`) — needs a dev machine/simulator.
+3. Close out Phase 1; update this file + memory.
+4. Then Phase 2 — Auth (phone + password): new Prisma `User`/`RefreshToken`, `/auth/login`+`/auth/refresh`, login screens, reset `api-client` auth surface.
 
 ---
 
 ## Blockers / Decisions Needed
 
-- 🔴 **Need a Supabase `DATABASE_URL`** to run Prisma migrations and verify Phase 1. Cannot proceed with the rebuild's DB steps without it.
+- **None blocking.** Supabase URL received; backend green. Remaining Phase 1 (app shells) can proceed; final app-boot check needs a simulator on a dev machine.
 - Deferred to Phase 9 (not blocking): SMS/OTP provider account, Google Maps API key + billing.
 
 ---
@@ -75,6 +76,11 @@ See `architecture.md` §14 (Local Setup) for detail.
 ---
 
 ## Handoff Log  *(append newest on top; keep entries short)*
+
+### 2026-08-02 — Amaan Ali (3)
+- **Did:** Reset backend to clean foundation on Supabase (purged OTP auth/admin-users/old migrations; minimal schema; Config+Prisma+Health). **Verified `GET /api/v1/health` green** against Supabase (commits `d3f0046`, `bb75be7`).
+- **State:** 🟢 Backend done. Frontend (3 Expo apps + shared packages) still old-plan.
+- **Next:** Reduce the three Expo apps to Phase 1 shells; verify boot on a simulator.
 
 ### 2026-08-02 — Amaan Ali (2)
 - **Did:** Chose **reset code fresh**. Started Phase 1 on `phase-1-foundation`: removed `docker/`, switched `server/.env.example` to Supabase + phone-password.
