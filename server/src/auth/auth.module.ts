@@ -6,7 +6,7 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { RolesGuard } from './guards/roles.guard';
 
 @Module({
-  imports: [JwtModule.register({})],
+  imports: [JwtModule.register({ global: true })],
   controllers: [AuthController],
   providers: [AuthService, JwtAuthGuard, RolesGuard],
   exports: [JwtAuthGuard, RolesGuard],
