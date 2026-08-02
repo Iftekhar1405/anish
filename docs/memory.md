@@ -12,7 +12,7 @@ Production-grade Artificial Insemination management platform for **cattle and go
 
 ## 2. Current Phase
 
-**Phase 1 ✅ done.** **Phase 2 — phone + password auth — code-complete** on `phase-2-auth` (backend verified via curl; apps typecheck clean; awaiting simulator login test). Account model: **farmer self-registers; admin/technician seeded**. Next after verify: **Phase 3 — Design System & Admin Core**. See `HANDOFF.md`.
+**Phases 1–2 ✅ done & verified on device.** **Phase 3 — Design System & Admin Core — in progress** on `phase-3-admin-core`. Account model: farmer self-registers; admin/technician seeded; admin creates technicians with an initial password. See `HANDOFF.md`.
 
 ---
 

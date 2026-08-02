@@ -19,33 +19,28 @@
 
 ## Current Status  *(overwrite each session — single source of truth)*
 
-- **Phase:** Phase 1 ✅ done. Phase 2 — phone + password auth — **code-complete**; backend verified via curl, all typechecks clean. Remaining: on-simulator login test.
-- **Branch / PR:** Phase 1 on `phase-1-foundation`; Phase 2 on `phase-2-auth` (stacked on Phase 1, **local — not pushed**).
-- **Health:** 🟢 Backend auth verified (register/login/me/refresh/reuse-detection all pass). Apps typecheck clean; boot/login unverified on device.
-- **Decision:** **Reset code fresh**; account model — **farmer self-registers; admin/technician seeded**.
+- **Phase:** Phases 1–2 ✅ done & verified on device. **Phase 3 — Design System & Admin Core — starting.**
+- **Branch / PR:** `phase-1-foundation` → `phase-2-auth` → `phase-3-admin-core` (stacked, **local — not pushed**).
+- **Health:** 🟢 Green — auth works end-to-end on all three apps (login + farmer register verified).
+- **Decision:** **Reset code fresh**; account model — **farmer self-registers; admin/technician seeded**; technician accounts created by Admin (Phase 3) with an admin-set initial password.
 - **Last updated by:** Amaan Ali · **Date:** 2026-08-02
-- **One-line summary:** Full phone+password auth built across backend + shared packages + all three apps. Needs a simulator login test to close Phase 2.
+- **One-line summary:** Auth complete. Now building the design system (`packages/ui`) + Admin core (dashboard, Manage Farmers/Technicians).
 
 ---
 
 ## In Progress (WIP)
 
-- **Phase 2 auth — code-complete on `phase-2-auth`, pending simulator test.**
-  - Backend (`56d3813`): `User`+`RefreshToken` (migration on Supabase); `/auth/register|login|refresh|logout|me`; scrypt passwords; rotating sha256 refresh tokens + reuse detection; RolesGuard; admin+technician seeded (`Password@123`). **Verified via curl.**
-  - Packages (`f119c40`): `types` + `api-client` auth surface reset to phone+password.
-  - Apps (`62f575b`): SecureStore storage, AuthProvider, role-scoped login (all), farmer register, Expo Router auth gating, home shows user+logout+health. All typecheck clean.
-- **To close Phase 2:** run each app on a simulator and test login (+ farmer register). See Next Steps. `packages/ui` reset still deferred to Phase 3.
+- **Phase 3 — Design System & Admin Core — starting** on `phase-3-admin-core`.
+  - Plan chunks: **(A) backend** farmers + technicians modules (list/get/update; technician create) — admin-guarded, verify via curl. **(B) `packages/ui`** reset from `design.md` (Button, Input, Card/StatCard, adaptive Table↔Card, Dialog/Sheet, EmptyState, Loading, Toast). **(C) Admin app** navigation shell + Dashboard + Manage Farmers/Technicians CRUD with RHF+Zod, all five states.
+  - Note: farmers = `User(role=FARMER)`, technicians = `User(role=TECHNICIAN)` — no new tables; admin creates technicians with an initial password.
 
 ---
 
 ## Next Steps  *(ordered queue — do the top one)*
 
-1. **Login test (human):** start server (`pnpm --filter server start:dev`); run each app; then close Phase 2:
-   - **admin** → login `+10000000001` / `Password@123`
-   - **technician** → login `+10000000002` / `Password@123`
-   - **farmer** → Register a new account (name/phone/password), land on Home, Log out, log back in
-   - (Physical device: set `EXPO_PUBLIC_API_BASE_URL` to your machine's LAN IP.)
-2. **Phase 3 — Design System & Admin Core:** build `packages/ui` primitives from `design.md` (reset old UI), adaptive table/card, then Admin dashboard + Manage Farmers/Technicians CRUD.
+1. **Phase 3 · Chunk A (backend):** `farmers` + `technicians` admin-guarded modules — list (paginate/search/filter by isActive), get, update (name/isActive), create technician (phone/name/password). Verify via curl with an admin token.
+2. **Chunk B:** reset `packages/ui` to `design.md` primitives (+ adaptive Table↔Card). Typecheck.
+3. **Chunk C:** Admin nav shell + Dashboard + Manage Farmers/Technicians screens; human simulator check.
 
 ---
 
@@ -60,7 +55,7 @@
 
 | Owner | Working on | Branch | Since |
 |-------|-----------|--------|-------|
-| Amaan Ali | Phase 2 — auth (code-complete, awaiting boot test) | `phase-2-auth` | 2026-08-02 |
+| Amaan Ali | Phase 3 — Design System & Admin Core | `phase-3-admin-core` | 2026-08-02 |
 
 _Convention: split by phase or by layer (e.g. one on backend module, one on the app screens) to avoid overlapping the same files._
 
@@ -81,6 +76,11 @@ See `architecture.md` §14 (Local Setup) for detail.
 ---
 
 ## Handoff Log  *(append newest on top; keep entries short)*
+
+### 2026-08-02 — Amaan Ali (7)
+- **Did:** Phase 2 login/register verified on simulators — **Phase 2 complete**. Marked done in `phases.md`. Starting Phase 3.
+- **State:** 🟢 Auth done end-to-end.
+- **Next:** Phase 3 · Chunk A — backend farmers/technicians modules.
 
 ### 2026-08-02 — Amaan Ali (6)
 - **Did:** Built Phase 2 phone+password auth end-to-end: backend (verified via curl), shared `types`/`api-client` reset, and all three apps (login/register/protected routing/logout). Account model: farmer self-registers; admin+technician seeded. Commits `56d3813`, `f119c40`, `62f575b`.
