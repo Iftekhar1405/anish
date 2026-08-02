@@ -24,6 +24,7 @@ export interface PaginatedResult<T> {
   total: number;
   page: number;
   pageSize: number;
+  pageCount: number;
 }
 
 const userSelect = {
@@ -69,7 +70,13 @@ export class UsersService {
       this.prisma.user.count({ where }),
     ]);
 
-    return { items, total, page, pageSize };
+    return {
+      items,
+      total,
+      page,
+      pageSize,
+      pageCount: Math.max(1, Math.ceil(total / pageSize)),
+    };
   }
 
   async findOne(role: Role, id: string): Promise<UserSummary> {

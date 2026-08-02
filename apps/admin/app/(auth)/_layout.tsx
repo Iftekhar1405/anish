@@ -4,6 +4,6 @@ import { useAuth } from "../../src/auth/AuthProvider";
 export default function AuthLayout() {
   const { status } = useAuth();
   if (status === "loading") return null;
-  if (status === "authed") return <Redirect href={"/home" as string as Href} />;
+  if (status === "authed") return <Redirect href={"/dashboard" as string as Href} />;
   return <Stack screenOptions={{ headerShown: false }} />;
 }
