@@ -12,6 +12,9 @@ import { BreedsModule } from './breeds/breeds.module';
 import { OrganizationsModule } from './organizations/organizations.module';
 import { DistrictsModule } from './districts/districts.module';
 import { ServiceAreasModule } from './service-areas/service-areas.module';
+import { CloudinaryModule } from './cloudinary/cloudinary.module';
+import { CatalogueModule } from './catalogue/catalogue.module';
+import { BatchesModule } from './batches/batches.module';
 
 @Module({
   imports: [
@@ -24,6 +27,9 @@ import { ServiceAreasModule } from './service-areas/service-areas.module';
     OrganizationsModule,
     DistrictsModule,
     ServiceAreasModule,
+    CloudinaryModule,
+    CatalogueModule,
+    BatchesModule,
   ],
   controllers: [AppController],
   providers: [

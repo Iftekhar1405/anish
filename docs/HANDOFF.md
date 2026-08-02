@@ -19,32 +19,30 @@
 
 ## Current Status  *(overwrite each session — single source of truth)*
 
-- **Phase:** Phases 1–3 ✅ done & verified on device. **Phase 4 — Master Data — starting.**
-- **Branch / PR:** `…phase-3-admin-core` → `phase-4-master-data` (stacked, **local — not pushed**).
-- **Health:** 🟢 Green — admin core verified on simulator (dashboard/farmers/technicians work).
-- **Decision:** **Reset code fresh**; `packages/ui` reused as-is. Phase 4: price stored as a field on the sire catalogue (no separate price-history table for now); farmers/technicians are `User` rows by role.
+- **Phase:** Phases 1–3 ✅ done & verified on device. **Phase 4 — Master Data — backend nearly done (4A–4C ✅); 4D + 4E remain.**
+- **Branch / PR:** `phase-4-master-data` (**local — not pushed**).
+- **Health:** 🟢 Green — all Phase 4 backend modules verified via curl against Supabase; Cloudinary signing verified with real creds.
+- **Decision:** **Reset code fresh**; `packages/ui` reused as-is. Phase 4: price stored as a field on the sire catalogue (no separate price-history table for now); farmers/technicians are `User` rows by role. Cloudinary uploads are **backend-signed** — client requests a signature at `POST /uploads/signature`, then uploads directly to Cloudinary (secret never leaves server).
 - **Last updated by:** Amaan Ali · **Date:** 2026-08-02
-- **One-line summary:** Admin core done. Now building master data — catalogue (+Cloudinary), inventory, animals, districts, service areas, breeds, organizations.
+- **One-line summary:** Reference masters + catalogue + inventory + Cloudinary signing all done & curl-verified. Remaining: animals CRUD (4D) + admin screens (4E).
 
 ---
 
 ## In Progress (WIP)
 
-- **Phase 4 — Master Data — 4A+4B done; 4C/4D/4E remain.** Branch `phase-4-master-data`.
+- **Phase 4 — Master Data — 4A+4B+4C done; 4D/4E remain.** Branch `phase-4-master-data`.
   - ✅ **4A** (`734452b`): Prisma models (Breed, Organization, District, ServiceArea, SireCatalogue, Batch, Animal + enums) migrated to Supabase. Shared `common/pagination` + `@AdminOnly()`.
   - ✅ **4B** (`734452b`): admin CRUD for breeds/organizations/districts/service-areas — **verified via curl** (CRUD + 409/404/401/400).
-  - ⬜ **4C** catalogue (Bull/Buck) + inventory (batches, per-batch quantity) + **Cloudinary signed upload**. Catalogue/batch CRUD needs no creds; only the image-upload signing endpoint does.
+  - ✅ **4C**: catalogue (SireCatalogue, Bull/Buck fields) + inventory (Batch, per-batch quantity) admin CRUD + **Cloudinary signed-upload** endpoint (`POST /uploads/signature`, `@AdminOnly()`). **Verified via curl** — catalogue CRUD (404 bad breed, 400 validation), batch CRUD (409 dup, 404 bad sire, 400 available>total on create & patch), and a real Cloudinary signature. Creds live in gitignored `server/.env` (`CLOUDINARY_*`), `cloudinary` SDK added.
   - ⬜ **4D** animals CRUD (admin view; farmer-owned). ⬜ **4E** admin screens for all masters.
-  - 🔴 **Blocker for the Cloudinary upload part of 4C:** need `CLOUDINARY_CLOUD_NAME/API_KEY/API_SECRET` in `server/.env`. Everything else proceeds without it.
   - Scope: straws = per-`Batch` quantity (no straw rows); straw price = `SireCatalogue` field.
 
 ---
 
 ## Next Steps  *(ordered queue — do the top one)*
 
-1. **Phase 4 · 4C:** catalogue (SireCatalogue) + inventory (Batch quantity) admin CRUD; then Cloudinary signed-upload endpoint (needs creds).
-2. **4D:** animals CRUD. **4E:** admin screens for catalogue/inventory/animals/breeds/orgs/districts/service-areas.
-3. **Provide Cloudinary creds** (`CLOUDINARY_*` in `server/.env`) so the catalogue image upload can be verified.
+1. **Phase 4 · 4D:** animals CRUD (admin view; farmer-owned via `farmerId`, `@@unique([farmerId, tag])`).
+2. **4E:** admin screens for catalogue/inventory/animals/breeds/orgs/districts/service-areas — including a Cloudinary image picker that calls `POST /uploads/signature` then uploads directly, storing `imageUrl`/`imagePublicId` on the sire.
 
 ---
 
@@ -80,6 +78,11 @@ See `architecture.md` §14 (Local Setup) for detail.
 ---
 
 ## Handoff Log  *(append newest on top; keep entries short)*
+
+### 2026-08-02 — Amaan Ali (12)
+- **Did:** Phase 4 · 4C — catalogue (SireCatalogue) + inventory (Batch) admin CRUD + Cloudinary backend-signed upload endpoint (`POST /uploads/signature`). Added `cloudinary` SDK, wired `CLOUDINARY_*` into gitignored `server/.env`. Typecheck clean; **verified via curl** (CRUD + 401/400/404/409 + real Cloudinary signature).
+- **State:** 🟢 Phase 4 backend done through 4C. Cloudinary signing works with live creds.
+- **Next:** 4D — animals CRUD; then 4E — admin screens for all masters (+ Cloudinary image picker on sires).
 
 ### 2026-08-02 — Amaan Ali (11)
 - **Did:** Phase 4 · 4A+4B — master-data Prisma models (migrated) + admin CRUD for breeds/organizations/districts/service-areas (`@AdminOnly()`, shared pagination). Verified via curl (`734452b`).
