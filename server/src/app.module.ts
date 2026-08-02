@@ -15,6 +15,7 @@ import { ServiceAreasModule } from './service-areas/service-areas.module';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { CatalogueModule } from './catalogue/catalogue.module';
 import { BatchesModule } from './batches/batches.module';
+import { AnimalsModule } from './animals/animals.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { BatchesModule } from './batches/batches.module';
     CloudinaryModule,
     CatalogueModule,
     BatchesModule,
+    AnimalsModule,
   ],
   controllers: [AppController],
   providers: [
