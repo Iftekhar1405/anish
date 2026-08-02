@@ -19,26 +19,33 @@
 
 ## Current Status  *(overwrite each session — single source of truth)*
 
-- **Phase:** Phase 1 — Foundation & Infrastructure — ✅ **COMPLETE & verified** (all three apps boot and show `API ok · DB connected`). Ready to start **Phase 2**.
-- **Branch / PR:** docs on `docs/planning-refactor` (PR open, unmerged); Phase 1 work on `phase-1-foundation` (stacked on docs, **local — not pushed**).
-- **Health:** 🟢 Green — backend live on Supabase; three native apps boot.
-- **Decision:** **Reset code fresh** — earlier OTP/Docker/Expo-Web scaffold removed and rebuilt to the new plan.
+- **Phase:** Phase 1 ✅ done. Phase 2 — phone + password auth — **code-complete**; backend verified via curl, all typechecks clean. Remaining: on-simulator login test.
+- **Branch / PR:** Phase 1 on `phase-1-foundation`; Phase 2 on `phase-2-auth` (stacked on Phase 1, **local — not pushed**).
+- **Health:** 🟢 Backend auth verified (register/login/me/refresh/reuse-detection all pass). Apps typecheck clean; boot/login unverified on device.
+- **Decision:** **Reset code fresh**; account model — **farmer self-registers; admin/technician seeded**.
 - **Last updated by:** Amaan Ali · **Date:** 2026-08-02
-- **One-line summary:** Phase 1 done and verified end-to-end. Next: Phase 2 — phone + password auth.
+- **One-line summary:** Full phone+password auth built across backend + shared packages + all three apps. Needs a simulator login test to close Phase 2.
 
 ---
 
 ## In Progress (WIP)
 
-- **Nothing in flight.** Phase 1 complete and committed on `phase-1-foundation`. Phase 2 not yet started.
-- Reference — Phase 1 delivered: Supabase-backed NestJS (Config+Prisma+Health, verified green) and three native Expo app shells (boot + `/health` status, typecheck clean). Shared-package auth/UI reset still deferred to Phases 2–3.
+- **Phase 2 auth — code-complete on `phase-2-auth`, pending simulator test.**
+  - Backend (`56d3813`): `User`+`RefreshToken` (migration on Supabase); `/auth/register|login|refresh|logout|me`; scrypt passwords; rotating sha256 refresh tokens + reuse detection; RolesGuard; admin+technician seeded (`Password@123`). **Verified via curl.**
+  - Packages (`f119c40`): `types` + `api-client` auth surface reset to phone+password.
+  - Apps (`62f575b`): SecureStore storage, AuthProvider, role-scoped login (all), farmer register, Expo Router auth gating, home shows user+logout+health. All typecheck clean.
+- **To close Phase 2:** run each app on a simulator and test login (+ farmer register). See Next Steps. `packages/ui` reset still deferred to Phase 3.
 
 ---
 
 ## Next Steps  *(ordered queue — do the top one)*
 
-1. **Boot check (human):** `pnpm --filter admin start` (then `farmer`, `technician`) on a simulator; confirm the home screen shows `API ok · DB connected`. Start the server first (`pnpm --filter server start:dev`). Closes Phase 1.
-2. **Phase 2 — Auth (phone + password):** Prisma `User`(+password_hash, `@@unique([phone, role])`)/`RefreshToken`; `POST /auth/login` + `/auth/refresh`; roles guard; reset `packages/api-client` auth surface (drop OTP); login screens + secure token storage in each app.
+1. **Login test (human):** start server (`pnpm --filter server start:dev`); run each app; then close Phase 2:
+   - **admin** → login `+10000000001` / `Password@123`
+   - **technician** → login `+10000000002` / `Password@123`
+   - **farmer** → Register a new account (name/phone/password), land on Home, Log out, log back in
+   - (Physical device: set `EXPO_PUBLIC_API_BASE_URL` to your machine's LAN IP.)
+2. **Phase 3 — Design System & Admin Core:** build `packages/ui` primitives from `design.md` (reset old UI), adaptive table/card, then Admin dashboard + Manage Farmers/Technicians CRUD.
 
 ---
 
@@ -53,7 +60,7 @@
 
 | Owner | Working on | Branch | Since |
 |-------|-----------|--------|-------|
-| _(none — Phase 1 done)_ | — | — | — |
+| Amaan Ali | Phase 2 — auth (code-complete, awaiting boot test) | `phase-2-auth` | 2026-08-02 |
 
 _Convention: split by phase or by layer (e.g. one on backend module, one on the app screens) to avoid overlapping the same files._
 
@@ -74,6 +81,11 @@ See `architecture.md` §14 (Local Setup) for detail.
 ---
 
 ## Handoff Log  *(append newest on top; keep entries short)*
+
+### 2026-08-02 — Amaan Ali (6)
+- **Did:** Built Phase 2 phone+password auth end-to-end: backend (verified via curl), shared `types`/`api-client` reset, and all three apps (login/register/protected routing/logout). Account model: farmer self-registers; admin+technician seeded. Commits `56d3813`, `f119c40`, `62f575b`.
+- **State:** 🟢 Code-complete; backend verified. Apps typecheck clean but not yet run on a simulator.
+- **Next:** Human login test on simulators (see Next Steps), then Phase 3.
 
 ### 2026-08-02 — Amaan Ali (5)
 - **Did:** Simulator boot check passed — all three apps show `API ok · DB connected`. **Phase 1 complete & verified.** Marked done in `phases.md`.
