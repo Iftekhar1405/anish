@@ -1,28 +1,26 @@
 import type {
-  AuthTokens,
-  AuthUser,
+  AuthClaims,
+  AuthResult,
+  LoginInput,
   RefreshInput,
-  RequestOtpInput,
-  RequestOtpResult,
-  VerifyOtpInput,
-  VerifyOtpResult,
+  RegisterInput,
 } from "@ai-platform/types";
 import type { ApiClient } from "./http-client";
 
 export interface AuthApi {
-  requestOtp(input: RequestOtpInput): Promise<RequestOtpResult>;
-  verifyOtp(input: VerifyOtpInput): Promise<VerifyOtpResult>;
-  refresh(input: RefreshInput): Promise<AuthTokens>;
+  register(input: RegisterInput): Promise<AuthResult>;
+  login(input: LoginInput): Promise<AuthResult>;
+  refresh(input: RefreshInput): Promise<AuthResult>;
   logout(input: RefreshInput): Promise<void>;
-  me(): Promise<AuthUser>;
+  me(): Promise<AuthClaims>;
 }
 
 export function createAuthApi(client: ApiClient): AuthApi {
   return {
-    requestOtp: (input) => client.post<RequestOtpResult>("/auth/otp/request", input),
-    verifyOtp: (input) => client.post<VerifyOtpResult>("/auth/otp/verify", input),
-    refresh: (input) => client.post<AuthTokens>("/auth/refresh", input),
+    register: (input) => client.post<AuthResult>("/auth/register", input),
+    login: (input) => client.post<AuthResult>("/auth/login", input),
+    refresh: (input) => client.post<AuthResult>("/auth/refresh", input),
     logout: (input) => client.post<void>("/auth/logout", input),
-    me: () => client.get<AuthUser>("/auth/me"),
+    me: () => client.get<AuthClaims>("/auth/me"),
   };
 }
