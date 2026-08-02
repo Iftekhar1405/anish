@@ -30,17 +30,19 @@
 
 ## In Progress (WIP)
 
-- **Phase 3 — Design System & Admin Core — starting** on `phase-3-admin-core`.
-  - Plan chunks: **(A) backend** farmers + technicians modules (list/get/update; technician create) — admin-guarded, verify via curl. **(B) `packages/ui`** reset from `design.md` (Button, Input, Card/StatCard, adaptive Table↔Card, Dialog/Sheet, EmptyState, Loading, Toast). **(C) Admin app** navigation shell + Dashboard + Manage Farmers/Technicians CRUD with RHF+Zod, all five states.
-  - Note: farmers = `User(role=FARMER)`, technicians = `User(role=TECHNICIAN)` — no new tables; admin creates technicians with an initial password.
+- **Phase 3 — Design System & Admin Core — Chunk A done; B & C remain.** Branch `phase-3-admin-core`.
+  - ✅ **(A) backend** (`89bf946`): `farmers`/`technicians` admin-guarded modules (User rows by role) — list (paginate/search/filter), get, update, create technician. JwtModule made global. **Verified via curl** (CRUD + 403/401/409/400). Also fixed build tsconfig → `dist/main.js`.
+  - ⬜ **(B) `packages/ui`** reset from `design.md`: Button, Input, Card/StatCard, adaptive Table↔Card, Dialog/Sheet, EmptyState, Loading, Toast. (Old UI package still present — reset when building this.)
+  - ⬜ **(C) Admin app**: adaptive nav shell (drawer/rail + tabs), Dashboard, Manage Farmers (list/edit/deactivate), Manage Technicians (list/create/edit/deactivate) — RHF+Zod, all five states. Needs simulator check.
+  - Note: farmers = `User(role=FARMER)`, technicians = `User(role=TECHNICIAN)`; admin creates technicians with an initial password.
 
 ---
 
 ## Next Steps  *(ordered queue — do the top one)*
 
-1. **Phase 3 · Chunk A (backend):** `farmers` + `technicians` admin-guarded modules — list (paginate/search/filter by isActive), get, update (name/isActive), create technician (phone/name/password). Verify via curl with an admin token.
-2. **Chunk B:** reset `packages/ui` to `design.md` primitives (+ adaptive Table↔Card). Typecheck.
-3. **Chunk C:** Admin nav shell + Dashboard + Manage Farmers/Technicians screens; human simulator check.
+1. **Phase 3 · Chunk B:** reset `packages/ui` to `design.md` primitives (Button, Input, Card/StatCard, adaptive Table↔Card, Dialog/Sheet, EmptyState, Loading, Toast). Typecheck.
+2. **Chunk C:** Admin adaptive nav shell + Dashboard + Manage Farmers/Technicians CRUD screens (wire to `/farmers` `/technicians`), RHF+Zod, all five states. Human simulator check closes Phase 3.
+3. Then Phase 4 — Master Data (catalogue, inventory, animals, districts, service areas, breeds, organizations) + Cloudinary.
 
 ---
 
@@ -76,6 +78,11 @@ See `architecture.md` §14 (Local Setup) for detail.
 ---
 
 ## Handoff Log  *(append newest on top; keep entries short)*
+
+### 2026-08-02 — Amaan Ali (8)
+- **Did:** Phase 3 Chunk A — backend `farmers`/`technicians` admin modules (list/get/update/create-technician), admin-guarded. Made JwtModule global; fixed build tsconfig (`dist/main.js`). Verified via curl (`89bf946`).
+- **State:** 🟢 Backend admin CRUD done. UI (Chunks B, C) not started.
+- **Next:** Chunk B — reset `packages/ui` from `design.md`.
 
 ### 2026-08-02 — Amaan Ali (7)
 - **Did:** Phase 2 login/register verified on simulators — **Phase 2 complete**. Marked done in `phases.md`. Starting Phase 3.
