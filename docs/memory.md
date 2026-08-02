@@ -12,7 +12,7 @@ Production-grade Artificial Insemination management platform for **cattle and go
 
 ## 2. Current Phase
 
-**Phase 1 — Foundation & Infrastructure — in progress** on branch `phase-1-foundation` (reset-fresh rebuild). 🟡 Blocked on a Supabase `DATABASE_URL`. See `HANDOFF.md` for the live state.
+**Phase 1 — Foundation & Infrastructure — ✅ complete & verified** on branch `phase-1-foundation` (reset-fresh). Next: **Phase 2 — phone + password auth**. See `HANDOFF.md` for the live state.
 
 ---
 

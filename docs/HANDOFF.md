@@ -19,20 +19,19 @@
 
 ## Current Status  *(overwrite each session — single source of truth)*
 
-- **Phase:** Phase 1 — Foundation & Infrastructure — **code-complete**; only the on-device app-boot check remains (needs a simulator).
+- **Phase:** Phase 1 — Foundation & Infrastructure — ✅ **COMPLETE & verified** (all three apps boot and show `API ok · DB connected`). Ready to start **Phase 2**.
 - **Branch / PR:** docs on `docs/planning-refactor` (PR open, unmerged); Phase 1 work on `phase-1-foundation` (stacked on docs, **local — not pushed**).
-- **Health:** 🟢 Backend green (`GET /api/v1/health` ok); all three apps typecheck clean.
+- **Health:** 🟢 Green — backend live on Supabase; three native apps boot.
 - **Decision:** **Reset code fresh** — earlier OTP/Docker/Expo-Web scaffold removed and rebuilt to the new plan.
 - **Last updated by:** Amaan Ali · **Date:** 2026-08-02
-- **One-line summary:** Backend + three Expo app shells reset and verified (typecheck + health). Run each app on a simulator to close Phase 1, then start Phase 2 (phone+password auth).
+- **One-line summary:** Phase 1 done and verified end-to-end. Next: Phase 2 — phone + password auth.
 
 ---
 
 ## In Progress (WIP)
 
-- **Backend foundation — DONE + verified** (commits `d3f0046`, `bb75be7`): removed Docker; Supabase env; purged OTP auth module, `admin-users`, old migrations/seed; minimal Prisma schema (no domain models); `app.module` = Config+Prisma+Health; `main.ts` drops CORS. Verified `GET /api/v1/health` green against Supabase. Set your own `server/.env` `DATABASE_URL` to run it (gitignored).
-- **Frontend shells — DONE (commit `950748a`).** Each app reduced to a minimal Phase 1 shell: root `_layout` (QueryClientProvider + SafeArea + Stack) + `app/index.tsx` home that pings `/health` and shows API/DB status. Old OTP screens/AuthProvider/feature modules/app-local lib removed. All three **typecheck clean**. Shared-package (`api-client`, `ui`, `types`, `config`) auth/UI reset intentionally deferred to Phases 2–3.
-- **Remaining for Phase 1:** run each app on a simulator (`pnpm --filter <app> start`) and confirm the home screen shows `API ok · DB connected`. Needs a dev machine — can't be done from the agent environment.
+- **Nothing in flight.** Phase 1 complete and committed on `phase-1-foundation`. Phase 2 not yet started.
+- Reference — Phase 1 delivered: Supabase-backed NestJS (Config+Prisma+Health, verified green) and three native Expo app shells (boot + `/health` status, typecheck clean). Shared-package auth/UI reset still deferred to Phases 2–3.
 
 ---
 
@@ -54,7 +53,7 @@
 
 | Owner | Working on | Branch | Since |
 |-------|-----------|--------|-------|
-| Amaan Ali | Phase 1 — Foundation (reset-fresh rebuild) | `phase-1-foundation` | 2026-08-02 |
+| _(none — Phase 1 done)_ | — | — | — |
 
 _Convention: split by phase or by layer (e.g. one on backend module, one on the app screens) to avoid overlapping the same files._
 
@@ -75,6 +74,11 @@ See `architecture.md` §14 (Local Setup) for detail.
 ---
 
 ## Handoff Log  *(append newest on top; keep entries short)*
+
+### 2026-08-02 — Amaan Ali (5)
+- **Did:** Simulator boot check passed — all three apps show `API ok · DB connected`. **Phase 1 complete & verified.** Marked done in `phases.md`.
+- **State:** 🟢 Phase 1 closed.
+- **Next:** Phase 2 — phone + password auth.
 
 ### 2026-08-02 — Amaan Ali (4)
 - **Did:** Reset the three Expo apps to clean Phase 1 shells (minimal `_layout` + `/health`-pinging home). All three typecheck clean (commit `950748a`).
