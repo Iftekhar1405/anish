@@ -12,7 +12,7 @@ Production-grade Artificial Insemination management platform for **cattle and go
 
 ## 2. Current Phase
 
-**None started — roadmap reset fresh.** Next up: **Phase 1 — Foundation & Infrastructure**.
+**Phase 1 — Foundation & Infrastructure — in progress** on branch `phase-1-foundation` (reset-fresh rebuild). 🟡 Blocked on a Supabase `DATABASE_URL`. See `HANDOFF.md` for the live state.
 
 ---
 
@@ -44,6 +44,7 @@ All 10 phases (`phases.md`): 1 Foundation · 2 Auth (phone+password) · 3 Design
 - **Icons: `lucide-react-native`** used consistently across all apps.
 - **11 master tables**: farmers, technicians, animals, sire_catalogue, batches, straws, prices, districts, service_areas, breeds, organizations. Bookings/breeding_history/notifications are transactional.
 - Money as integer minor units; booking state machine + inventory decrement enforced server-side in a transaction.
+- **Reset code fresh** (2026-08-02): the earlier scaffold embodied the old plan (OTP auth, Docker Postgres, Expo-Web admin). Rather than adapt, we rebuild from zero to match the fresh roadmap and new decisions.
 
 ---
 

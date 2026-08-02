@@ -19,33 +19,33 @@
 
 ## Current Status  *(overwrite each session — single source of truth)*
 
-- **Phase:** Documentation & planning complete. Implementation **not started**.
-- **Next phase to build:** Phase 1 — Foundation & Infrastructure.
-- **Branch / PR:** `master` (no feature branch yet).
-- **Health:** 🟢 Green — docs consistent, nothing broken.
+- **Phase:** Phase 1 — Foundation & Infrastructure **in progress** (reset-fresh rebuild).
+- **Branch / PR:** docs on `docs/planning-refactor` (PR open, unmerged); Phase 1 work on `phase-1-foundation` (stacked on docs).
+- **Health:** 🟡 Blocked — waiting on a Supabase `DATABASE_URL` to run migrations + verify.
+- **Decision:** **Reset code fresh** — the earlier OTP/Docker/Expo-Web scaffold is being removed and rebuilt to the new plan.
 - **Last updated by:** Amaan Ali · **Date:** 2026-08-02
-- **One-line summary:** Docs refactored to all-native RN + Supabase + Cloudinary, phone+password day-one auth, 10-phase roadmap. Ready to start Phase 1.
+- **One-line summary:** Started Phase 1 on a clean-slate basis: removed Docker Postgres, switched env to Supabase. Old app/server code still present pending the rebuild (needs Supabase URL).
 
 ---
 
 ## In Progress (WIP)
 
-- Nothing in flight. No half-done code.
-- _(When picking up work, list here: what you're building, files touched, and how to run/test the partial state so your partner can continue it.)_
+- **Phase 1 reset-fresh rebuild.** Done so far on `phase-1-foundation`: removed `docker/` (Supabase replaces local Docker Postgres); rewrote `server/.env.example` for Supabase + phone-password + Cloudinary (OTP/FCM/Maps commented as later phases).
+- **Still to do (blocked on Supabase URL):** remove old-plan code (`server/src/auth` OTP module, `server/src/admin-users`, OTP Prisma models, old app screens/CORS); stand up a clean NestJS (health + Prisma) against Supabase; re-scaffold the three Expo apps; verify `GET /api/v1/health` + apps boot.
 
 ---
 
 ## Next Steps  *(ordered queue — do the top one)*
 
-1. **Start Phase 1 — Foundation & Infrastructure** (`phases.md` §Phase 1): monorepo (pnpm + Turborepo), three Expo apps, `packages/*`, NestJS server, Prisma + **Supabase** `DATABASE_URL`, `GET /api/v1/health`.
-2. Then Phase 2 — Auth (phone + password).
-3. Then Phase 3 — Design System & Admin Core.
+1. **Provide a Supabase `DATABASE_URL`** (create project → paste here or into `server/.env`). Blocks everything below.
+2. **Finish Phase 1 rebuild:** purge old-plan code, clean NestJS (health + Prisma) on Supabase, re-scaffold the three Expo apps, verify health + boots.
+3. Then Phase 2 — Auth (phone + password).
 
 ---
 
 ## Blockers / Decisions Needed
 
-- **None right now.**
+- 🔴 **Need a Supabase `DATABASE_URL`** to run Prisma migrations and verify Phase 1. Cannot proceed with the rebuild's DB steps without it.
 - Deferred to Phase 9 (not blocking): SMS/OTP provider account, Google Maps API key + billing.
 
 ---
@@ -54,7 +54,7 @@
 
 | Owner | Working on | Branch | Since |
 |-------|-----------|--------|-------|
-| _(none)_ | — | — | — |
+| Amaan Ali | Phase 1 — Foundation (reset-fresh rebuild) | `phase-1-foundation` | 2026-08-02 |
 
 _Convention: split by phase or by layer (e.g. one on backend module, one on the app screens) to avoid overlapping the same files._
 
@@ -75,6 +75,11 @@ See `architecture.md` §14 (Local Setup) for detail.
 ---
 
 ## Handoff Log  *(append newest on top; keep entries short)*
+
+### 2026-08-02 — Amaan Ali (2)
+- **Did:** Chose **reset code fresh**. Started Phase 1 on `phase-1-foundation`: removed `docker/`, switched `server/.env.example` to Supabase + phone-password.
+- **State:** 🟡 Blocked — need a Supabase `DATABASE_URL` before the DB rebuild + verification.
+- **Next:** Provide Supabase URL, then purge old-plan code and rebuild clean NestJS + Expo apps.
 
 ### 2026-08-02 — Amaan Ali
 - **Did:** Refactored the full doc set (PRD, architecture, phases, design, memory) to all-native RN + Supabase + Cloudinary; enhanced design.md for high-UX; established this handoff protocol.
