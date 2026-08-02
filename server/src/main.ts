@@ -4,6 +4,10 @@ import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  // All three clients are native React Native (Expo) apps; they send no browser
+  // Origin header, so CORS is not required. Add origins here only if a web client
+  // is ever introduced.
   app.setGlobalPrefix('api/v1');
   app.useGlobalPipes(
     new ValidationPipe({
