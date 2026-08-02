@@ -30,18 +30,21 @@
 
 ## In Progress (WIP)
 
-- **Phase 4 — Master Data — starting** on `phase-4-master-data`.
-  - Sub-chunks: **(4A)** Prisma models for all masters + migration. **(4B)** backend reference masters (breeds, organizations, districts, service-areas) CRUD. **(4C)** catalogue (Bull/Buck) + Cloudinary signed upload + inventory (batches/straws) + price-as-field. **(4D)** animals. **(4E)** admin screens for each.
-  - 🔴 **Blocker for 4C:** need **Cloudinary** creds (`CLOUDINARY_CLOUD_NAME/API_KEY/API_SECRET`) in `server/.env` to verify signed image upload. Everything else proceeds without it.
+- **Phase 4 — Master Data — 4A+4B done; 4C/4D/4E remain.** Branch `phase-4-master-data`.
+  - ✅ **4A** (`734452b`): Prisma models (Breed, Organization, District, ServiceArea, SireCatalogue, Batch, Animal + enums) migrated to Supabase. Shared `common/pagination` + `@AdminOnly()`.
+  - ✅ **4B** (`734452b`): admin CRUD for breeds/organizations/districts/service-areas — **verified via curl** (CRUD + 409/404/401/400).
+  - ⬜ **4C** catalogue (Bull/Buck) + inventory (batches, per-batch quantity) + **Cloudinary signed upload**. Catalogue/batch CRUD needs no creds; only the image-upload signing endpoint does.
+  - ⬜ **4D** animals CRUD (admin view; farmer-owned). ⬜ **4E** admin screens for all masters.
+  - 🔴 **Blocker for the Cloudinary upload part of 4C:** need `CLOUDINARY_CLOUD_NAME/API_KEY/API_SECRET` in `server/.env`. Everything else proceeds without it.
+  - Scope: straws = per-`Batch` quantity (no straw rows); straw price = `SireCatalogue` field.
 
 ---
 
 ## Next Steps  *(ordered queue — do the top one)*
 
-1. **Phase 4 · 4A:** Prisma models — `Breed`, `Organization`, `District`, `ServiceArea`, `SireCatalogue`, `Batch`, `Straw`, `Animal` (+ enums Species). Migrate to Supabase.
-2. **4B:** backend reference-master CRUD (breeds/organizations/districts/service-areas), admin-guarded; verify via curl.
-3. **4C:** catalogue + Cloudinary signed upload + inventory + price; **4D:** animals; **4E:** admin screens.
-4. **(when 4C):** provide Cloudinary creds in `server/.env`.
+1. **Phase 4 · 4C:** catalogue (SireCatalogue) + inventory (Batch quantity) admin CRUD; then Cloudinary signed-upload endpoint (needs creds).
+2. **4D:** animals CRUD. **4E:** admin screens for catalogue/inventory/animals/breeds/orgs/districts/service-areas.
+3. **Provide Cloudinary creds** (`CLOUDINARY_*` in `server/.env`) so the catalogue image upload can be verified.
 
 ---
 
@@ -77,6 +80,11 @@ See `architecture.md` §14 (Local Setup) for detail.
 ---
 
 ## Handoff Log  *(append newest on top; keep entries short)*
+
+### 2026-08-02 — Amaan Ali (11)
+- **Did:** Phase 4 · 4A+4B — master-data Prisma models (migrated) + admin CRUD for breeds/organizations/districts/service-areas (`@AdminOnly()`, shared pagination). Verified via curl (`734452b`).
+- **State:** 🟢 Reference masters done. Catalogue/inventory/animals + admin screens remain.
+- **Next:** 4C — catalogue + inventory + Cloudinary (needs `CLOUDINARY_*` creds for the upload part).
 
 ### 2026-08-02 — Amaan Ali (10)
 - **Did:** Admin core verified on simulator — **Phase 3 complete**. Marked done in `phases.md`. Starting Phase 4 (Master Data).
