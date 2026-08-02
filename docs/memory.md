@@ -1,102 +1,64 @@
-# memory.md — AI Management Platform (Living Document)
+# memory.md — AI Management Platform (Living Log)
 
-> Update after **every** implementation session.
-
----
-
-## Project Overview
-
-Production-grade Artificial Insemination Management Platform for **cattle and goats**, built to scale to thousands of farmers across multiple states. **Three independent Expo (React Native) apps** — Admin (Expo Web, desktop-first), Farmer (mobile), Technician (mobile) — sharing **one NestJS backend** with **PostgreSQL/Prisma**, **Cloudinary** media, **FCM** push, **Google Maps**, **JWT + OTP** auth.
+> Updated after every implementation session. Records the current state, decisions, and open items so any session can resume with full context.
 
 ---
 
-## Current Phase
+## 1. Project Overview
 
-**Phase 4 — Admin Core: Dashboard, Farmers, Technicians. Complete and fully verified**, including live end-to-end CRUD against a real database. Ready to proceed to Phase 5.
-
----
-
-## Completed Work
-
-- PRD.md, architecture.md, rules.md, phases.md, design.md, memory.md authored (Phase 0). Docs moved to `docs/` per architecture.md's repo layout.
-- Refinements applied: all three apps → **Expo/React Native**; **Cloudinary** replaces AWS S3; **Docker used only for local PostgreSQL**.
-- **Phase 1 scaffold built:**
-  - Root: pnpm workspace (`pnpm-workspace.yaml`), Turborepo (`turbo.json`), base tsconfig, root `.gitignore`.
-  - `packages/config`: shared `tsconfig.base.json` / `tsconfig.react-native.json`, ESLint preset (legacy `.eslintrc`-style — **not yet flat-config**, see Known Issues), NativeWind/Tailwind preset with design.md tokens.
-  - `server/`: NestJS 11 app (`nest new`), TS strict mode enabled, Prisma 6 wired via a global `PrismaModule`/`PrismaService`, `GET /api/v1/health` pings the DB, `ConfigModule` loads `.env`.
-  - `apps/admin`, `apps/farmer`, `apps/technician`: scaffolded via `create-expo-app@latest` (Expo SDK 57, RN 0.86, React 19.2.3), restructured to match architecture.md. NativeWind wired in all three.
-  - `docker/postgres/docker-compose.yml`: Postgres 16-alpine service with healthcheck, `.env.example`.
-- **Phase 2 built (this session):**
-  - **Prisma schema**: `Role` enum (ADMIN/FARMER/TECHNICIAN), `User` (unique on `[phone, role]` — same phone can hold one account per role), `OtpCode` (hashed code, attempts, expiry), `RefreshToken` (hashed, revocable, rotation-tracked). Migration `20260731165717_add_auth` applied against live Postgres; `pnpm prisma:seed` provisioned the default ADMIN/TECHNICIAN.
-  - **`server/src/auth/`**: `AuthService` (OTP request/verify, JWT access+refresh issuance, refresh rotation with reuse detection that revokes the whole chain, logout, `getCurrentUser`), `AuthController` (`POST /auth/otp/request`, `/otp/verify`, `/refresh`, `/logout`, `GET /auth/me`), `JwtAuthGuard` + `RolesGuard` + `@Roles()`/`@CurrentUser()` decorators. OTP codes and refresh-token identifiers are hashed at rest via Node's built-in `scrypt` (`src/common/crypto.util.ts`) — no bcrypt dependency needed. OTP delivery is a swappable `OtpProvider` interface; `ConsoleOtpProvider` (dev-mode, logs the code) is the only implementation — matches `OTP_PROVIDER_KEY` already anticipated in architecture.md's env list. Non-production responses include a `devCode` field so the flow is testable without a real SMS provider.
-  - **Role provisioning policy**: FARMER accounts self-provision on first OTP verify; ADMIN and TECHNICIAN accounts must already exist (seeded, or later created via Phase 4 admin CRUD) — requesting an OTP for a non-existent admin/technician phone returns 404. `prisma/seed.ts` + `pnpm prisma:seed` provisions one default ADMIN and one TECHNICIAN from `SEED_ADMIN_PHONE`/`SEED_TECHNICIAN_PHONE` env vars.
-  - Global `ValidationPipe` (whitelist + transform) added in `main.ts`; `class-validator`/`class-transformer`/`@nestjs/jwt` added as deps. `server` now also depends on `@ai-platform/types` (workspace) so DTO response shapes and client types share one source of truth, per rules.md's shared-types rule.
-  - **`packages/types`**: added `UserRole`, `AuthUser`, `AuthTokens`, `RequestOtpInput/Result`, `VerifyOtpInput/Result`, `RefreshInput`, plus zod schemas (`phoneSchema`, `otpCodeSchema`, `requestOtpFormSchema`, `verifyOtpFormSchema`) shared by all three apps' forms. Added `zod` dependency.
-  - **`packages/api-client`**: `TokenStorage` interface (per-app implementation), `createAuthApi()` wrapping the five auth endpoints, and retry-once-on-401 handling built into `ApiClient` itself (`onUnauthorized` config hook calls back into the app's refresh logic, then the client retries the original request once).
-  - **All three apps**: `src/lib/storage.ts` (SecureStore for farmer/technician; `localStorage` guarded for SSR for admin, since Admin is Expo-Web-only per architecture.md), `src/lib/api.ts` (wires client + storage + refresh), `src/providers/AuthProvider.tsx` (status: loading/authenticated/unauthenticated, hydrates from stored token via `GET /auth/me` on launch), `src/features/auth/{schema.ts,screens/RequestOtpScreen.tsx,screens/VerifyOtpScreen.tsx}` (React Hook Form + zod, loading/error/resend states). Routing restructured into `(auth)` (`login`, `verify`) and `(app)` (protected `index`) Expo Router groups; each group's `_layout.tsx` does the redirect (`(auth)` → `/` if already authenticated; `(app)` → `/login` if not, with a loading spinner while hydrating). Added `react-hook-form` + `@hookform/resolvers` to each app; admin's login/verify screens use a centered card layout (desktop-first per design.md) vs. full-bleed on farmer/technician.
-- **Verified:** `turbo run typecheck` passes for all 7 TS packages + server; `nest build` succeeds; **11 backend unit tests pass** (`auth.service.spec.ts` covering farmer auto-provision, technician/admin must-preexist, wrong-code lockout after max attempts, refresh rotation + reuse-detection revoking the whole chain, resend cooldown; `roles.guard.spec.ts` covering role match/mismatch/no-requirement/no-user) — all against an in-memory Prisma fake, no live DB needed; all three Expo apps bundle cleanly (`expo export -p web`) with the new `(auth)`/`(app)` routes present in the static route list.
-- **Session 4 live verification:** Docker was finally available — started Postgres, ran `prisma migrate dev --name add_auth`, seeded, and hit the running server directly: `GET /api/v1/health` → `{status:"ok",database:"connected"}`; farmer OTP request/verify auto-provisioned a new user and returned real access+refresh JWTs; pre-seeded technician and admin both logged in and `GET /auth/me` round-tripped correctly on the technician's token; an unseeded technician phone got the expected 404; `/auth/me` with no token got 401. Phase 2 is now fully closed per rules.md.
-- **Phase 3 built (this session):** `packages/ui` filled in with the full primitive set from design.md: `Button` (primary/secondary/outline/destructive/ghost × sm/md, pressed/disabled/loading), `Input` (label/helper/error, default/focused/error/disabled, text/number/search/textarea via passthrough props, `forwardRef`), `Select` (modal-based picker — deliberately simple; no dedicated date-picker component yet, see Known Issues), `Card` + `StatCard` (generic surfaces — domain-specific cards like the catalogue image card are left to the phases that define that data), `EmptyState`, `Spinner`/`Skeleton` (`Loading.tsx`), `ToastProvider`/`useToast` (success/error/warning/info, auto-dismiss, animated), `Dialog` (centered on web, bottom-sheet on mobile via `Platform.OS`, confirm/cancel + destructive variant, animated), `Table<T>` (generic, controlled sorting/pagination — sorting/pagination happen server-side per architecture.md, this component just renders + emits callbacks; zebra rows + sticky-feeling header on desktop, collapses to stacked `Card`s below a width breakpoint on mobile; loading/error/empty states built in), and navigation-shell primitives `Sidebar` + `TopBar` (admin desktop chrome) + `BottomTabBar` (farmer/technician mobile chrome).
-  - Added `lucide-react-native` + `react-native-svg` as direct dependencies of `packages/ui` and all three apps (same pnpm-doesn't-hoist-transitive-native-deps lesson documented in Known Issues from Phase 1). Added `nativewind` as a `packages/ui` dependency purely so its own `tsc --noEmit` sees the `className`-on-RN-primitives ambient type augmentation (apps already had this via their own `nativewind-env.d.ts`; the package needed its own).
-  - **Navigation shells — deliberately not wired into real app routing yet**: with only one real authenticated screen per app right now, a multi-item `Sidebar` or a one-tab `BottomTabBar` would be hollow chrome, not genuine navigation — building that now would mean either fabricating dead links to sections that don't exist (Farmers/Technicians/etc. land in Phase 4+) or shipping a pointless single-item bar. Instead: `TopBar` *is* wired into Admin's real `(app)/_layout.tsx` now (a title bar adds real value even with one screen); `Sidebar`/`BottomTabBar` are fully exercised in the Design Gallery with realistic multi-section sample data, ready to wire for real as soon as a second real section exists (starting Phase 4 for Admin's Sidebar, later phases for Farmer/Technician's tab bar).
-  - **Design Gallery**: a dev-only screen (`src/features/design-gallery/DesignGalleryScreen.tsx`, gated behind `__DEV__` via a `DevGalleryLink` on each home screen) exercising every primitive and state — added to **farmer** (proves native rendering) and **admin** (proves web rendering); skipped technician since it would exercise the identical RN/native code path as farmer with no new proof value. `ToastProvider` was added to all three apps' root `_layout.tsx` (foundational infra alongside `QueryClientProvider`/`AuthProvider`), so `useToast()` is available everywhere even though only farmer/admin have a gallery demonstrating it today.
-- **Verified:** full `turbo run typecheck` (8 packages) green; `expo export -p web` for admin (bundled, `/design-gallery` route present) and technician (sanity check); `expo export -p android` for farmer (native bundle, confirms `react-native-svg` autolinking resolves at bundle time); backend's 11 unit tests re-run clean (untouched this phase, confirming no regression).
-- **Phase 4 built:** Added `isActive Boolean @default(true)` to `User` (migration `20260731182755_add_user_is_active`) — the "deactivate" mechanism for admin-managed accounts (no hard delete, per rules.md's soft-delete-where-auditability-matters standard).
-  - **`server/src/admin-users/`**: one role-parametrized `AdminUsersService` (list with search/sort/pagination, create, update name/isActive) reused by two thin ADMIN-only controllers — `/admin/farmers` and `/admin/technicians` — rather than duplicating CRUD logic per resource. Duplicate phone+role on create → 409. Cross-role update attempts (e.g. patching a technician's id through the farmers endpoint) → 404, not a silent cross-role edit. List search matches name or phone (case-insensitive `contains`); sorting is allow-listed to `name`/`phone`/`createdAt` to prevent arbitrary-column injection via query params.
-  - Fixed a real bug surfaced by this phase: `AuthModule` exported `JwtAuthGuard`/`RolesGuard` but not the `JwtModule` those guards depend on, so any *other* module importing `AuthModule` to use the guards failed at boot with `UnknownDependenciesException` (JwtService unresolvable). Fixed by adding `JwtModule` to `AuthModule`'s `exports`. Caught immediately by booting the real server for live verification — a reminder that `nest build`/`tsc` alone don't catch DI wiring mistakes, only booting does.
-  - **`packages/types`**: `AdminUserSummary`, `CreateAdminUserInput`/`UpdateAdminUserInput` (+ zod form schemas), `PaginatedResult<T>`, `ListQuery` — shared between server DTOs and the admin app's forms/API calls.
-  - **`packages/ui` refinements driven by real usage**: `Dialog` gained an optional `children` slot (Phase 3 only supported title/description/confirm-cancel — Create/Edit Farmer needed actual form fields inside); `Table` gained a configurable `actionsColumnWidth` prop (the hardcoded 96px column was too narrow for two row-action buttons). Both changes are backward compatible with Phase 3's existing usages.
-  - **Admin app**: Farmers and Technicians screens (near-identical, one per role) — `Table` with search/sort/pagination, Create/Edit via `Dialog` + React Hook Form + zod, Deactivate/Reactivate via a confirm `Dialog`, TanStack Query mutations with list-invalidation and toast feedback on success/error. Dashboard screen now shows real `StatCard`s (total farmers/technicians, fetched cheaply via `pageSize: 1` list calls rather than a dedicated stats endpoint). **`Sidebar` is now wired into Admin's real `(app)/_layout.tsx`** (Dashboard/Farmers/Technicians, active-state driven by `usePathname()`) — this is the "second real section" moment flagged as the trigger in the Phase 3 notes.
-  - Admin-only feature code (api.ts/hooks.ts per resource) lives in the admin app itself, not in shared `packages/api-client` — farmer/technician never call these endpoints, so keeping them app-local avoids polluting the shared client.
-- **Verified live, end-to-end, against the real database** (not just unit tests): admin login → create farmer → duplicate phone+role rejected (409) → search/list → update name → deactivate, all via direct HTTP calls to a running server; admin-created technician appears correctly scoped in `/admin/technicians` and never leaks into `/admin/farmers`; a farmer's access token correctly gets 403 on admin endpoints. Full workspace typecheck and backend test suite (20 tests) re-confirmed; admin `expo export -p web` bundles all new routes (`/`, `/farmers`, `/technicians`).
+Production-grade Artificial Insemination management platform for **cattle and goats**. One **NestJS** backend serves **three native React Native (Expo) apps** — Admin (native, adaptive), Farmer, Technician. **Supabase Postgres** (Prisma), **Cloudinary** media. Build proceeds **one phase at a time** (`phases.md`). Full scope in `PRD.md`; technical spec in `architecture.md`; design system in `design.md`.
 
 ---
 
-## Pending Work
+## 2. Current Phase
 
-- Phase 5 (Catalogue & Inventory) onward per docs/phases.md.
-
----
-
-## Architecture Decisions
-
-- **Monorepo** with shared `packages/` (types, api-client, ui, config).
-- **NativeWind** for styling across native + web (replaces Shadcn/Tailwind-DOM).
-- **No Server Components** (not available in RN); TanStack Query for server state.
-- Admin ships as **Expo Web** build (same RN component model, not a separate DOM stack).
-- **Backend-signed Cloudinary uploads**; no secrets in clients.
-- **Docker only for local Postgres**; app deployment via EAS (mobile) + static web export (admin) + Node/managed Postgres (backend).
-- Money as integer minor units; booking state machine enforced server-side.
-- Farmer never selects technician — **admin assigns**.
-- **Auth**: phone+role is the identity key (one phone can hold at most one account per role). Farmers self-provision on first login; admins/technicians must be pre-provisioned (seed script, or admin CRUD as of Phase 4). OTP codes and refresh-token identifiers are hashed with Node's built-in `scrypt` rather than adding bcrypt. Refresh tokens rotate on every use; reuse of an already-rotated token revokes the user's entire refresh-token chain (theft/replay defense) rather than just the one token.
-- **api-client owns refresh-on-401**: each app supplies a `TokenStorage` + an `onUnauthorized` callback; the shared `ApiClient` retries the original request once after a successful refresh, so this logic isn't duplicated per app.
-- **Table sorting/pagination are controlled, not client-side**: `packages/ui`'s `Table<T>` only renders and emits `onSortChange`/`onPageChange` — the actual sort/paginate happens server-side (architecture.md's API design principles already require pagination/filtering/sorting on list endpoints), so the component doesn't duplicate that logic client-side.
-- **Navigation shells adopted incrementally, not all at once**: `Sidebar`/`TopBar`/`BottomTabBar` exist as design-system primitives from Phase 3, but each app only wires the ones it has genuine multiple destinations for. Admin's `Sidebar` went live in Phase 4 once Dashboard/Farmers/Technicians all existed as real screens; Farmer/Technician's `BottomTabBar` is still gallery-only pending a second real screen in those apps.
-- **No hard delete for admin-managed accounts**: Farmers/Technicians are deactivated (`isActive: false`), never deleted — matches rules.md's soft-delete-where-auditability-matters standard and avoids breaking future FK references once Bookings/Breeding History exist.
-- **Shared CRUD logic, not shared HTTP surface**: one `AdminUsersService` backs both `/admin/farmers` and `/admin/technicians` to avoid duplicating list/create/update logic, but each is still its own resource-oriented controller/route per architecture.md's API design principles — the sharing is an implementation detail, not a merged endpoint.
+**None started — roadmap reset fresh.** Next up: **Phase 1 — Foundation & Infrastructure**.
 
 ---
 
-## Known Issues
+## 3. Completed Work
 
-- `packages/config/eslint-preset.js` is written in legacy `.eslintrc` format, but the server scaffold (and Expo's own `expo lint`) use ESLint 9 flat config (`eslint.config.mjs`). The shared preset isn't actually wired into any app/server lint pipeline yet — it exists but flat-config wiring is deferred (revisit before Phase 13 hardening).
-- NativeWind v4 on Expo SDK 57 requires manually adding `babel-preset-expo` and `react-native-css-interop` as **direct** dependencies of each app (pnpm's strict node_modules doesn't hoist Expo's transitive deps) — already fixed in all three apps' package.json, documented here so the pattern isn't rediscovered.
-- No SMS provider is integrated yet — `ConsoleOtpProvider` logs the code server-side and non-production responses include `devCode`. A real provider should be wired behind `OTP_PROVIDER_KEY` before production (Phase 13/14 hardening), without needing to touch `AuthService`.
-- **No dedicated date-picker component**: design.md lists "date" as an Input type, but `packages/ui` doesn't have one yet — building a cross-platform date picker would need a new dependency (e.g. `@react-native-community/datetimepicker`) with no concrete screen to validate it against yet. Deferred to Phase 8 (booking creation), which is the first screen that actually needs one.
-- `BottomTabBar` is still gallery-only (farmer/technician don't yet have a second real screen to navigate between); `Sidebar` is now live in Admin as of Phase 4.
-- Dashboard's farmer/technician totals are fetched via two `pageSize: 1` list calls rather than a dedicated `/admin/stats` endpoint — fine at current scale; revisit if a real analytics/reporting need (Phase 12) makes a dedicated aggregation endpoint worthwhile.
-
----
-
-## Future Improvements
-
-- Payments/subsidy, multi-language, AI genetics recommendations, IoT heat detection (out of current scope).
+- **Documentation refactored** to the all-native + Supabase + Cloudinary model:
+  - `PRD.md`, `phases.md` rewritten from scratch.
+  - `architecture.md` rewritten and expanded (now also absorbs the old `rules.md` and `SETUP.md`, which were removed).
+  - `design.md` updated (adaptive admin, `lucide-react-native` icons) and **substantially enhanced for high-UX/feel**: experience principles, role-tuned UX, motion/haptics, skeleton+optimistic feedback system, offline UX, imagery, data-viz, onboarding, microcopy voice, accessibility, performance-as-UX.
+  - Doc set: PRD, architecture, phases, design, memory, **HANDOFF** (+ root **CLAUDE.md**).
+  - Added **`docs/HANDOFF.md`** (live two-developer baton) and root **`CLAUDE.md`** enforcing the handoff protocol: every agent reads HANDOFF.md first and updates it before pushing.
+- No application phase implemented yet under the fresh roadmap.
 
 ---
 
-## Session Notes
+## 4. Pending Work
 
-- **Session 1:** Created initial documentation set and applied three refinements (Expo for all apps, Cloudinary, Postgres-in-Docker) without changing project scope. Established verify-and-test, phase-by-phase cadence. Ready for Phase 1 on approval.
-- **Session 2:** Built Phase 1 (monorepo, 3 Expo apps, NestJS+Prisma server, Docker Compose for Postgres). Typecheck/build/bundle all verified; live DB connection deferred because Docker Desktop wasn't running and the user chose to skip starting it this session. Moved docs into `docs/` to match architecture.md's documented repo layout (was previously flat at repo root).
-- **Session 3:** Docker still wasn't running; user explicitly chose to proceed into Phase 2 anyway rather than fix that gap first (deviation from rules.md's normal phase-gating, done knowingly). Built the full Phase 2 auth module end-to-end: backend (Prisma models, AuthService/Controller, guards, seed script, 11 passing unit tests), shared packages (types + zod schemas, api-client auth wiring with refresh-on-401), and OTP login + protected routing in all three apps. Verified everything short of a live database (typecheck, build, bundle, unit tests all green).
-- **Session 4:** Docker was available this time. Closed out the deferred DB verification: started Postgres, ran the Phase 2 migration, seeded default admin/technician, and confirmed the full OTP login flow end-to-end for all three roles against a live server + database. Phase 2 is fully done. Then built all of Phase 3: every `packages/ui` primitive from design.md (Button/Input/Select/Card/StatCard/EmptyState/Loading/Toast/Dialog/Table/Sidebar/TopBar/BottomTabBar), wired `TopBar` into Admin's real layout, added `ToastProvider` to all three apps, and built a `__DEV__`-gated Design Gallery in farmer (native) + admin (web) exercising every component and state. Deliberately did not force Sidebar/BottomTabBar into real routing yet since only one real screen exists per app today — documented as a judgment call to avoid either dead links or pointless single-item chrome. Verified via full-workspace typecheck, bundling (web + android), and a re-run of the untouched backend test suite. Phase 3 is fully done. Then, same session, built Phase 4: `isActive` migration, shared `AdminUsersService` behind `/admin/farmers` + `/admin/technicians`, 9 new unit tests (20 total), and Admin's Farmers/Technicians/Dashboard screens with the `Sidebar` finally wired in for real. Hit and fixed a genuine DI bug (`AuthModule` not exporting `JwtModule`) that only surfaced when actually booting the server — `nest build`/`tsc` had both passed clean. Verified the whole CRUD surface live against the real database (create/duplicate-reject/search/update/deactivate, role-scoping both ways, cross-role update rejection) before calling Phase 4 done. Ready for Phase 5 (Catalogue & Inventory).
+All 10 phases (`phases.md`): 1 Foundation · 2 Auth (phone+password) · 3 Design System & Admin Core · 4 Master Data · 5 Farmer App & Booking · 6 Assignment & Technician Workflow · 7 Breeding History & Notifications · 8 Reports/Analytics/Settings/Hardening · 9 OTP Login & Maps Navigation · 10 Deployment.
+
+---
+
+## 5. Architecture Decisions
+
+- **All three apps are native mobile RN (Expo)**; the **Admin app is native with an adaptive layout** (tables ↔ cards) — no Expo Web build.
+- **Database: Supabase-hosted Postgres** via a standard `DATABASE_URL`. **Docker for the DB is dropped.**
+- **Auth day-one = phone + password** (JWT access/refresh). **OTP login is deferred to the final phase** as an added method.
+- **Maps/navigation (Google Maps) also deferred to the final phase**; technician sees a plain address until then.
+- **Media uploads via Cloudinary** (backend-signed); AWS S3 removed.
+- **Icons: `lucide-react-native`** used consistently across all apps.
+- **11 master tables**: farmers, technicians, animals, sire_catalogue, batches, straws, prices, districts, service_areas, breeds, organizations. Bookings/breeding_history/notifications are transactional.
+- Money as integer minor units; booking state machine + inventory decrement enforced server-side in a transaction.
+
+---
+
+## 6. Known Issues
+
+- None yet (implementation not started under the fresh roadmap).
+
+---
+
+## 7. Future Improvements
+
+Out of current scope (see `PRD.md` §15): payments, subsidy handling, multi-language, AI-based genetics recommendation, IoT heat-detection.
+
+---
+
+## 8. Session Notes
+
+- **This session:** Refined the plan to all-native RN (adaptive Admin) + Cloudinary; switched DB to Supabase (no Docker); set day-one auth to phone+password with OTP and Maps deferred to the final phase; standardized on `lucide-react-native`; finalized the 11-master data model. Rewrote PRD, phases, architecture, design, memory; removed `rules.md` and `SETUP.md`. Awaiting review/approval before implementation begins.
