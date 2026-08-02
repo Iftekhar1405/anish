@@ -12,7 +12,7 @@ Production-grade Artificial Insemination management platform for **cattle and go
 
 ## 2. Current Phase
 
-**Phases 1–2 ✅ done & verified on device.** **Phase 3 — Design System & Admin Core — in progress** on `phase-3-admin-core`. Account model: farmer self-registers; admin/technician seeded; admin creates technicians with an initial password. See `HANDOFF.md`.
+**Phases 1–3 ✅ done & verified on device.** **Phase 4 — Master Data — in progress** on `phase-4-master-data`. `packages/ui` reused as-is (design.md-aligned). Phase 4 note: straw price stored as a field on the sire catalogue (no separate price-history table for now). See `HANDOFF.md`.
 
 ---
 

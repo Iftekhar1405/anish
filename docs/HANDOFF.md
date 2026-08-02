@@ -19,29 +19,29 @@
 
 ## Current Status  *(overwrite each session — single source of truth)*
 
-- **Phase:** Phases 1–2 ✅. **Phase 3 — Design System & Admin Core — code-complete** (backend verified; UI typechecks). Remaining: admin simulator check.
-- **Branch / PR:** `phase-1-foundation` → `phase-2-auth` → `phase-3-admin-core` (stacked, **local — not pushed**).
-- **Health:** 🟢 Backend admin CRUD verified; `packages/ui` + admin app typecheck clean.
-- **Decision:** **Reset code fresh**; farmer self-registers; admin/technician seeded; admin creates technicians with an initial password. **`packages/ui` reused as-is** (already `design.md`-aligned) rather than rewritten.
+- **Phase:** Phases 1–3 ✅ done & verified on device. **Phase 4 — Master Data — starting.**
+- **Branch / PR:** `…phase-3-admin-core` → `phase-4-master-data` (stacked, **local — not pushed**).
+- **Health:** 🟢 Green — admin core verified on simulator (dashboard/farmers/technicians work).
+- **Decision:** **Reset code fresh**; `packages/ui` reused as-is. Phase 4: price stored as a field on the sire catalogue (no separate price-history table for now); farmers/technicians are `User` rows by role.
 - **Last updated by:** Amaan Ali · **Date:** 2026-08-02
-- **One-line summary:** Admin dashboard + Manage Farmers/Technicians built on the existing design-system components. Needs an admin simulator run to close Phase 3.
+- **One-line summary:** Admin core done. Now building master data — catalogue (+Cloudinary), inventory, animals, districts, service areas, breeds, organizations.
 
 ---
 
 ## In Progress (WIP)
 
-- **Phase 3 — code-complete on `phase-3-admin-core`; awaiting admin simulator check.**
-  - ✅ **(A) backend** (`89bf946`): `farmers`/`technicians` admin modules, verified via curl (CRUD + 403/401/409/400); JwtModule global; build → `dist/main.js`; list returns `pageCount`.
-  - ✅ **(B) `packages/ui`** — reused as-is (already matches `design.md`; Table is adaptive Table↔Card). Only `types` changed: `admin-user` → `users`.
-  - ✅ **(C) admin** (`1ad291e`): Tabs shell (Dashboard/Farmers/Technicians), StatCard dashboard, Farmers list+edit, Technicians list+create+edit — RHF+Zod, TanStack Query, toasts. Typecheck clean.
-  - **To close Phase 3:** run the admin app on a simulator (login `+10000000001`/`Password@123`), check dashboard counts, edit a farmer, create+edit a technician.
+- **Phase 4 — Master Data — starting** on `phase-4-master-data`.
+  - Sub-chunks: **(4A)** Prisma models for all masters + migration. **(4B)** backend reference masters (breeds, organizations, districts, service-areas) CRUD. **(4C)** catalogue (Bull/Buck) + Cloudinary signed upload + inventory (batches/straws) + price-as-field. **(4D)** animals. **(4E)** admin screens for each.
+  - 🔴 **Blocker for 4C:** need **Cloudinary** creds (`CLOUDINARY_CLOUD_NAME/API_KEY/API_SECRET`) in `server/.env` to verify signed image upload. Everything else proceeds without it.
 
 ---
 
 ## Next Steps  *(ordered queue — do the top one)*
 
-1. **Admin simulator check (human):** start server; `pnpm --filter admin start`; login `+10000000001`/`Password@123`; verify Dashboard counts, Farmers edit, Technicians create+edit. Closes Phase 3.
-2. **Phase 4 — Master Data:** catalogue (Bull/Buck + Cloudinary upload), inventory (batches/straws), animals, districts, service areas, breeds, organizations — Prisma models + admin CRUD.
+1. **Phase 4 · 4A:** Prisma models — `Breed`, `Organization`, `District`, `ServiceArea`, `SireCatalogue`, `Batch`, `Straw`, `Animal` (+ enums Species). Migrate to Supabase.
+2. **4B:** backend reference-master CRUD (breeds/organizations/districts/service-areas), admin-guarded; verify via curl.
+3. **4C:** catalogue + Cloudinary signed upload + inventory + price; **4D:** animals; **4E:** admin screens.
+4. **(when 4C):** provide Cloudinary creds in `server/.env`.
 
 ---
 
@@ -56,7 +56,7 @@
 
 | Owner | Working on | Branch | Since |
 |-------|-----------|--------|-------|
-| Amaan Ali | Phase 3 — Design System & Admin Core | `phase-3-admin-core` | 2026-08-02 |
+| Amaan Ali | Phase 4 — Master Data | `phase-4-master-data` | 2026-08-02 |
 
 _Convention: split by phase or by layer (e.g. one on backend module, one on the app screens) to avoid overlapping the same files._
 
@@ -77,6 +77,11 @@ See `architecture.md` §14 (Local Setup) for detail.
 ---
 
 ## Handoff Log  *(append newest on top; keep entries short)*
+
+### 2026-08-02 — Amaan Ali (10)
+- **Did:** Admin core verified on simulator — **Phase 3 complete**. Marked done in `phases.md`. Starting Phase 4 (Master Data).
+- **State:** 🟢 Phases 1–3 done.
+- **Next:** Phase 4 · 4A — Prisma master-data models + migration.
 
 ### 2026-08-02 — Amaan Ali (9)
 - **Did:** Phase 3 Chunks B+C — reused `packages/ui` (design.md-aligned), swapped `types` admin-user→users, built admin Tabs shell + Dashboard + Manage Farmers/Technicians (RHF+Zod, TanStack Query, toasts). Backend `pageCount` added. Typechecks clean; backend verified (`1ad291e`).

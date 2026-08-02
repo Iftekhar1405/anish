@@ -2,7 +2,7 @@
 
 > **Rule:** build **one phase at a time**. Each phase is **verified and tested** before proceeding to the next. Update `memory.md` after every session.
 
-This roadmap is organized into **10 phases**. **Phases 1–2 are complete**; Phases 3–10 remain. Every application is a **native mobile React Native (Expo) app** (Admin, Farmer, Technician) sharing **one NestJS backend**. Database is **Supabase-hosted PostgreSQL** (standard `DATABASE_URL`, no Docker). Media uploads use **Cloudinary**. **Day-one auth is phone + password**; **OTP login and Google Maps navigation are deferred to Phase 9** (the final feature phase before deployment). Documentation is treated as ongoing rather than a numbered phase.
+This roadmap is organized into **10 phases**. **Phases 1–3 are complete**; Phases 4–10 remain. Every application is a **native mobile React Native (Expo) app** (Admin, Farmer, Technician) sharing **one NestJS backend**. Database is **Supabase-hosted PostgreSQL** (standard `DATABASE_URL`, no Docker). Media uploads use **Cloudinary**. **Day-one auth is phone + password**; **OTP login and Google Maps navigation are deferred to Phase 9** (the final feature phase before deployment). Documentation is treated as ongoing rather than a numbered phase.
 
 **Legend:** ✅ Done · 🚧 In Progress · ⬜ Pending
 
@@ -56,7 +56,7 @@ Each phase defines: **Objective · Deliverables · Implementation Plan · Comple
 
 ---
 
-## Phase 3 — Design System & Admin Core ⬜ Pending
+## Phase 3 — Design System & Admin Core ✅ Done
 
 **Objective:** Implement the shared design system and the admin foundation (adaptive native).
 
