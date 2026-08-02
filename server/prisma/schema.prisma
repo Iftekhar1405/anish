@@ -1,7 +1,6 @@
 // Prisma schema — AI Insemination Management Platform
 // Domain models are introduced module-by-module per docs/phases.md.
-// Phase 1 establishes the connection only; no domain models yet.
-// Phase 2 adds: Role, User, RefreshToken (phone + password auth).
+// Phase 1: connection only. Phase 2: phone + password auth (User, RefreshToken).
 
 generator client {
   provider = "prisma-client-js"
@@ -10,4 +9,41 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  FARMER
+  TECHNICIAN
+}
+
+model User {
+  id           String   @id @default(cuid())
+  phone        String
+  role         Role
+  name         String
+  passwordHash String
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  refreshTokens RefreshToken[]
+
+  // A phone is scoped to a role: the same person may exist as at most one
+  // account per role, and the three apps never share an identity.
+  @@unique([phone, role])
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+  @@map("refresh_tokens")
 }
