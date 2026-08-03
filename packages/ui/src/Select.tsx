@@ -36,6 +36,10 @@ export function Select<T extends string = string>({
       <Pressable
         disabled={disabled}
         onPress={() => setOpen(true)}
+        accessibilityRole="button"
+        accessibilityLabel={label}
+        accessibilityHint={error ?? (selected ? undefined : placeholder)}
+        accessibilityState={{ disabled }}
         className={cn(
           "flex-row items-center justify-between rounded-md border px-4 py-3",
           error ? "border-error" : "border-neutral-300",
@@ -61,6 +65,8 @@ export function Select<T extends string = string>({
                     onChange(item.value);
                     setOpen(false);
                   }}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: item.value === value }}
                   className={cn(
                     "rounded-md px-4 py-3",
                     item.value === value ? "bg-primary-50" : "",

@@ -34,4 +34,9 @@ export class ListUsersQueryDto {
   )
   @IsBoolean()
   isActive?: boolean;
+
+  /** Farmers: their own district. Technicians: their service area's district. */
+  @IsOptional()
+  @IsString()
+  districtId?: string;
 }

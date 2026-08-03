@@ -11,8 +11,10 @@ import {
 import { AnimalBreedingStatus, Species } from '@prisma/client';
 
 export class CreateAnimalDto {
+  /** Required when an Admin creates on behalf of a farmer; ignored/derived for a Farmer caller. */
+  @IsOptional()
   @IsString()
-  farmerId!: string;
+  farmerId?: string;
 
   @IsEnum(Species)
   species!: Species;

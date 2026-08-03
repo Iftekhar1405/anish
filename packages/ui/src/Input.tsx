@@ -34,6 +34,10 @@ export const Input = forwardRef<TextInput, InputProps>(function Input(
         multiline={multiline}
         textAlignVertical={multiline ? "top" : undefined}
         placeholderTextColor="#9CA3AF"
+        accessibilityLabel={label}
+        accessibilityHint={error ?? helperText}
+        accessibilityState={{ disabled: isDisabled }}
+        aria-invalid={hasError}
         className={cn(
           "rounded-md border px-4 py-3 text-base text-neutral-900",
           multiline ? "min-h-24" : "",

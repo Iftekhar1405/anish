@@ -10,4 +10,20 @@ export class UpdateUserDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
+
+  /** Farmer only: postal address shown to the assigned technician. */
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  address?: string;
+
+  /** Farmer only: which district they're in. */
+  @IsOptional()
+  @IsString()
+  districtId?: string;
+
+  /** Technician only: which service area they cover. */
+  @IsOptional()
+  @IsString()
+  serviceAreaId?: string;
 }

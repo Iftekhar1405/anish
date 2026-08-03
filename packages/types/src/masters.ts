@@ -86,6 +86,18 @@ export interface Batch {
   createdAt: string;
 }
 
+export interface BreedingHistoryEntry {
+  id: string;
+  animalId: string;
+  bookingId: string;
+  inseminationDate: string;
+  notes: string | null;
+  createdAt: string;
+  booking?: {
+    batch?: { sire?: { id: string; name: string; species: Species } | null } | null;
+  } | null;
+}
+
 export interface Animal {
   id: string;
   farmerId: string;
@@ -267,3 +279,14 @@ export const animalFormSchema = z.object({
 });
 export type AnimalFormInput = z.input<typeof animalFormSchema>;
 export type AnimalFormValues = z.output<typeof animalFormSchema>;
+
+// Animal (farmer self-service — no farmerId/breedingStatus, those are
+// server-resolved or system-managed rather than farmer-editable).
+export const farmerAnimalFormSchema = z.object({
+  species: speciesSchema,
+  breedId: z.string().optional().transform((v) => (v ? v : undefined)),
+  tag: z.string().trim().min(1, "Tag is required").max(60),
+  ageMonths: optionalIntText("Age (months)", 600),
+});
+export type FarmerAnimalFormInput = z.input<typeof farmerAnimalFormSchema>;
+export type FarmerAnimalFormValues = z.output<typeof farmerAnimalFormSchema>;
