@@ -45,9 +45,12 @@ pnpm --filter server start:dev   # GET /api/v1/health
 pnpm --filter admin start        # or farmer / technician
 ```
 
+
+
 ## Commands
 
 Root (Turborepo, runs across all workspaces):
+
 ```bash
 pnpm build       # turbo run build
 pnpm lint        # turbo run lint
@@ -56,6 +59,7 @@ pnpm test        # turbo run test
 ```
 
 Server (NestJS, in `server/`):
+
 ```bash
 pnpm --filter server start:dev            # watch mode
 pnpm --filter server test                 # jest unit tests
@@ -67,19 +71,22 @@ pnpm --filter server prisma:studio        # inspect data
 ```
 
 Apps (`admin` / `farmer` / `technician`):
+
 ```bash
 pnpm --filter admin start      # expo start (then i/a/w for iOS/Android/web preview)
 pnpm --filter admin typecheck  # tsc --noEmit
 pnpm --filter admin lint       # expo lint
 ```
 
+
+
 ## Monorepo layout
 
 pnpm workspaces + Turborepo. `packages/*` are shared and consumed by all three apps — check there before adding anything app-local that could be cross-app:
+
 - `packages/types` — shared TS types + Zod schemas, source of truth for DTOs mirrored between server and clients.
 - `packages/api-client` — typed fetch layer + TanStack Query hooks.
 - `packages/ui` — shared NativeWind-based RN components.
 - `packages/config` — shared eslint/tsconfig/nativewind presets.
 
 Each Expo app (`apps/admin|farmer|technician`) is feature-based: `app/` holds Expo Router routes, `src/features/<feature>/` holds components/hooks/screens/schema per feature. `server/src/<module>/` follows Nest's controller → service → Prisma pattern per feature module, with cross-cutting concerns in `server/src/common/`. Full data model, auth flow, and booking state machine are in `docs/architecture.md` §5–7.
-

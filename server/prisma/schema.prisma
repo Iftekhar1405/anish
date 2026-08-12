@@ -4,11 +4,18 @@
 
 generator client {
   provider = "prisma-client-js"
+  // "native" for local dev; the rhel target is the engine Vercel's serverless
+  // runtime (Amazon Linux, OpenSSL 3) needs — required or queries fail on deploy.
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  // Runtime: Supabase connection POOLER (port 6543, ?pgbouncer=true) — serverless
+  // opens many short-lived connections, so pooling is required.
+  url       = env("DATABASE_URL")
+  // Migrations/introspection need a DIRECT connection (port 5432).
+  directUrl = env("DIRECT_URL")
 }
 
 enum Role {

@@ -1,4 +1,5 @@
 import { Platform } from "react-native";
+import Constants, { ExecutionEnvironment } from "expo-constants";
 import { apiClient } from "../lib/api";
 
 /**
@@ -8,11 +9,14 @@ import { apiClient } from "../lib/api";
  */
 export async function registerForPushNotifications(): Promise<void> {
   if (Platform.OS === "web") return;
+  // Expo Go removed remote push in SDK 53, and `expo-notifications` *throws at
+  // module scope* the moment it's required there — which in dev surfaces a
+  // LogBox overlay even when the import is wrapped in try/catch. So we must not
+  // require the module at all in Expo Go; a dev/production build gets full push.
+  if (Constants.executionEnvironment === ExecutionEnvironment.StoreClient) return;
   try {
-    // Imported lazily on purpose: in Expo Go on Android, `expo-notifications`
-    // throws at module scope (remote push was removed in SDK 53). A static
-    // import would break evaluation of the layout that imports this file,
-    // taking the whole route group down instead of degrading gracefully.
+    // Imported lazily on purpose so nothing in this module's dependency graph is
+    // evaluated until we've confirmed we're outside Expo Go.
     const Notifications = await import("expo-notifications");
     const settings = await Notifications.getPermissionsAsync();
     let status = settings.status;
