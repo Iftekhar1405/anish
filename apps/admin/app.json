@@ -38,7 +38,8 @@
         {
           "photosPermission": "Allow $(PRODUCT_NAME) to access your photos to attach sire images to the catalogue."
         }
-      ]
+      ],
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true,

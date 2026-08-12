@@ -11,6 +11,6 @@ export default function Index() {
       </View>
     );
   }
-  const target: string = status === "authed" ? "/home" : "/login";
+  const target: string = status === "authed" ? "/animals" : "/login";
   return <Redirect href={target as Href} />;
 }

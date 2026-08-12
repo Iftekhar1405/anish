@@ -13,9 +13,10 @@ import {
 } from "@ai-platform/ui";
 import {
   createTechnicianFormSchema,
-  updateUserFormSchema,
+  updateTechnicianFormSchema,
   type CreateTechnicianFormValues,
-  type UpdateUserFormValues,
+  type UpdateTechnicianFormInput,
+  type UpdateTechnicianFormValues,
   type UserSummary,
 } from "@ai-platform/types";
 import {
@@ -23,6 +24,7 @@ import {
   useTechnicians,
   useUpdateTechnician,
 } from "../../src/features/users/hooks";
+import { serviceAreas } from "../../src/features/masters/hooks";
 
 const PAGE_SIZE = 10;
 
@@ -46,10 +48,15 @@ export default function TechniciansScreen() {
     resolver: zodResolver(createTechnicianFormSchema),
     defaultValues: { name: "", phone: "", password: "" },
   });
-  const editForm = useForm<UpdateUserFormValues>({
-    resolver: zodResolver(updateUserFormSchema),
-    defaultValues: { name: "" },
+  const editForm = useForm<UpdateTechnicianFormInput, unknown, UpdateTechnicianFormValues>({
+    resolver: zodResolver(updateTechnicianFormSchema),
+    defaultValues: { name: "", serviceAreaId: "" },
   });
+  const serviceAreaQuery = serviceAreas.useList({ pageSize: 100 });
+  const serviceAreaOptions = [
+    { label: "None", value: "" },
+    ...(serviceAreaQuery.data?.items ?? []).map((a) => ({ label: a.name, value: a.id })),
+  ];
 
   function openCreate(): void {
     createForm.reset({ name: "", phone: "", password: "" });
@@ -59,7 +66,7 @@ export default function TechniciansScreen() {
   function openEdit(row: UserSummary): void {
     setEditing(row);
     setActive(row.isActive);
-    editForm.reset({ name: row.name });
+    editForm.reset({ name: row.name, serviceAreaId: row.serviceAreaId ?? "" });
   }
 
   const onCreate = createForm.handleSubmit(async (values) => {
@@ -80,7 +87,7 @@ export default function TechniciansScreen() {
     try {
       await updateTechnician.mutateAsync({
         id: editing.id,
-        input: { name: values.name, isActive: active },
+        input: { name: values.name, isActive: active, serviceAreaId: values.serviceAreaId },
       });
       toast.show("Technician updated", "success");
       setEditing(null);
@@ -210,6 +217,19 @@ export default function TechniciansScreen() {
                 value={field.value}
                 onChangeText={field.onChange}
                 error={editForm.formState.errors.name?.message}
+              />
+            )}
+          />
+          <Controller
+            control={editForm.control}
+            name="serviceAreaId"
+            render={({ field }) => (
+              <Select
+                label="Service area"
+                placeholder={serviceAreaQuery.isLoading ? "Loading…" : "Select a service area"}
+                value={field.value || ""}
+                options={serviceAreaOptions}
+                onChange={field.onChange}
               />
             )}
           />

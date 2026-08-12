@@ -19,6 +19,10 @@
     "typescript": "^5.6.3"
   },
   "pnpm": {
+    "overrides": {
+      "react-native": "0.86.2",
+      "@react-native/metro-config": "0.86.2"
+    },
     "onlyBuiltDependencies": [
       "@prisma/client",
       "@prisma/engines",

@@ -8,6 +8,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { hashPassword } from '../common/crypto.util';
 import { ListUsersQueryDto } from './dto/list-users-query.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 import { CreateTechnicianDto } from './dto/create-technician.dto';
 
 export interface UserSummary {
@@ -17,6 +18,11 @@ export interface UserSummary {
   role: Role;
   isActive: boolean;
   createdAt: Date;
+  address: string | null;
+  districtId: string | null;
+  district: { id: string; name: string; state: string } | null;
+  serviceAreaId: string | null;
+  serviceArea: { id: string; name: string; districtId: string } | null;
 }
 
 export interface PaginatedResult<T> {
@@ -34,6 +40,11 @@ const userSelect = {
   role: true,
   isActive: true,
   createdAt: true,
+  address: true,
+  districtId: true,
+  district: { select: { id: true, name: true, state: true } },
+  serviceAreaId: true,
+  serviceArea: { select: { id: true, name: true, districtId: true } },
 } satisfies Prisma.UserSelect;
 
 @Injectable()
@@ -56,6 +67,13 @@ export class UsersService {
               { phone: { contains: query.search } },
             ],
           }
+        : {}),
+      // Farmers are filtered by their own district; technicians by their
+      // service area's district (there's no direct districtId on a technician).
+      ...(query.districtId
+        ? role === Role.TECHNICIAN
+          ? { serviceArea: { districtId: query.districtId } }
+          : { districtId: query.districtId }
         : {}),
     };
 
@@ -99,6 +117,31 @@ export class UsersService {
       data: {
         ...(dto.name !== undefined ? { name: dto.name } : {}),
         ...(dto.isActive !== undefined ? { isActive: dto.isActive } : {}),
+        ...(dto.address !== undefined ? { address: dto.address } : {}),
+        ...(dto.districtId !== undefined ? { districtId: dto.districtId } : {}),
+        ...(dto.serviceAreaId !== undefined
+          ? { serviceAreaId: dto.serviceAreaId }
+          : {}),
+      },
+      select: userSelect,
+    });
+  }
+
+  async findOwnProfile(userId: string): Promise<UserSummary> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: userSelect,
+    });
+    if (!user) throw new NotFoundException('User not found');
+    return user;
+  }
+
+  updateOwnProfile(userId: string, dto: UpdateProfileDto): Promise<UserSummary> {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        ...(dto.address !== undefined ? { address: dto.address } : {}),
+        ...(dto.districtId !== undefined ? { districtId: dto.districtId } : {}),
       },
       select: userSelect,
     });

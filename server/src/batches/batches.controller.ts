@@ -1,12 +1,17 @@
-import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
-import { AdminOnly } from '../auth/decorators/admin-only.decorator';
+import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { Role } from '@prisma/client';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
 import { BatchesService } from './batches.service';
 import { CreateBatchDto } from './dto/create-batch.dto';
 import { UpdateBatchDto } from './dto/update-batch.dto';
 import { ListBatchesQueryDto } from './dto/list-batches-query.dto';
 
+/** Farmers read batches (to find an available straw for booking); only Admin manages them. */
 @Controller('batches')
-@AdminOnly()
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(Role.ADMIN, Role.FARMER)
 export class BatchesController {
   constructor(private readonly batches: BatchesService) {}
 
@@ -21,11 +26,13 @@ export class BatchesController {
   }
 
   @Post()
+  @Roles(Role.ADMIN)
   create(@Body() dto: CreateBatchDto) {
     return this.batches.create(dto);
   }
 
   @Patch(':id')
+  @Roles(Role.ADMIN)
   update(@Param('id') id: string, @Body() dto: UpdateBatchDto) {
     return this.batches.update(id, dto);
   }

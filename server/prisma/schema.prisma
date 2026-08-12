@@ -35,6 +35,21 @@ enum AnimalBreedingStatus {
   CALVED
 }
 
+enum BookingStatus {
+  PENDING
+  ASSIGNED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum NotificationEvent {
+  BOOKING_ASSIGNED
+  BOOKING_STARTED
+  BOOKING_COMPLETED
+  ADMIN_BROADCAST
+}
+
 model User {
   id           String   @id @default(cuid())
   phone        String
@@ -45,11 +60,38 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  refreshTokens RefreshToken[]
-  animals       Animal[]
+  // Farmer profile (address/district — technician sees this to find the farmer).
+  address    String?
+  districtId String?
+  district   District? @relation(fields: [districtId], references: [id], onDelete: SetNull)
+
+  // Technician profile (coverage area, used to filter the admin's assign picker).
+  serviceAreaId String?
+  serviceArea   ServiceArea? @relation(fields: [serviceAreaId], references: [id], onDelete: SetNull)
+
+  refreshTokens        RefreshToken[]
+  animals              Animal[]
+  bookingsAsFarmer     Booking[]      @relation("BookingFarmer")
+  bookingsAsTechnician Booking[]      @relation("BookingTechnician")
+  deviceTokens         DeviceToken[]
+  notifications        Notification[]
 
   @@unique([phone, role])
   @@map("users")
+}
+
+model OtpCode {
+  id         String    @id @default(cuid())
+  phone      String
+  role       Role
+  codeHash   String
+  attempts   Int       @default(0)
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([phone, role])
+  @@map("otp_codes")
 }
 
 model RefreshToken {
@@ -104,6 +146,7 @@ model District {
   updatedAt DateTime @updatedAt
 
   serviceAreas ServiceArea[]
+  farmers      User[]
 
   @@unique([state, name])
   @@map("districts")
@@ -117,6 +160,8 @@ model ServiceArea {
   isActive   Boolean  @default(true)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+
+  technicians User[]
 
   @@unique([districtId, name])
   @@index([districtId])
@@ -168,6 +213,8 @@ model Batch {
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
 
+  bookings Booking[]
+
   @@unique([sireId, batchNumber])
   @@index([sireId])
   @@map("batches")
@@ -187,7 +234,92 @@ model Animal {
   createdAt      DateTime             @default(now())
   updatedAt      DateTime             @updatedAt
 
+  bookings        Booking[]
+  breedingHistory BreedingHistory[]
+
   @@unique([farmerId, tag])
   @@index([farmerId])
   @@map("animals")
+}
+
+model Booking {
+  id            String        @id @default(cuid())
+  animalId      String
+  animal        Animal        @relation(fields: [animalId], references: [id], onDelete: Restrict)
+  farmerId      String
+  farmer        User          @relation("BookingFarmer", fields: [farmerId], references: [id], onDelete: Restrict)
+  batchId       String
+  batch         Batch         @relation(fields: [batchId], references: [id], onDelete: Restrict)
+  technicianId  String?
+  technician    User?         @relation("BookingTechnician", fields: [technicianId], references: [id], onDelete: SetNull)
+  status        BookingStatus @default(PENDING)
+  preferredDate DateTime
+  notes         String?
+  assignedAt    DateTime?
+  startedAt     DateTime?
+  completedAt   DateTime?
+  serviceNotes  String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  breedingHistory BreedingHistory?
+
+  @@index([farmerId])
+  @@index([animalId])
+  @@index([batchId])
+  @@index([technicianId])
+  @@index([status])
+  @@map("bookings")
+}
+
+model BreedingHistory {
+  id               String   @id @default(cuid())
+  animalId         String
+  animal           Animal   @relation(fields: [animalId], references: [id], onDelete: Cascade)
+  bookingId        String   @unique
+  booking          Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  inseminationDate DateTime
+  notes            String?
+  createdAt        DateTime @default(now())
+
+  @@index([animalId])
+  @@map("breeding_history")
+}
+
+model DeviceToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@map("device_tokens")
+}
+
+model AppSettings {
+  id                String   @id @default(cuid())
+  lowStockThreshold Int      @default(10)
+  supportPhone      String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@map("app_settings")
+}
+
+model Notification {
+  id        String            @id @default(cuid())
+  userId    String
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event     NotificationEvent
+  title     String
+  body      String
+  bookingId String?
+  readAt    DateTime?
+  createdAt DateTime          @default(now())
+
+  @@index([userId])
+  @@index([userId, readAt])
+  @@map("notifications")
 }

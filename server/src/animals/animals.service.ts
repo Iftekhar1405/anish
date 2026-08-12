@@ -1,11 +1,13 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Animal, Prisma, Role } from '@prisma/client';
+import { Animal, BreedingHistory, Prisma, Role } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import type { JwtPayload } from '../auth/interfaces/jwt-payload.interface';
 import { buildResult, PaginatedResult, paginate } from '../common/pagination';
 import { CreateAnimalDto } from './dto/create-animal.dto';
 import { UpdateAnimalDto } from './dto/update-animal.dto';
@@ -22,10 +24,13 @@ const animalInclude = {
 export class AnimalsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async list(query: ListAnimalsQueryDto): Promise<PaginatedResult<Animal>> {
+  async list(
+    query: ListAnimalsQueryDto,
+    currentUser: JwtPayload,
+  ): Promise<PaginatedResult<Animal>> {
     const { page, pageSize, skip, take } = paginate(query);
     const where: Prisma.AnimalWhereInput = {
-      ...(query.farmerId ? { farmerId: query.farmerId } : {}),
+      farmerId: currentUser.role === Role.FARMER ? currentUser.sub : query.farmerId,
       ...(query.species ? { species: query.species } : {}),
       ...(query.breedingStatus ? { breedingStatus: query.breedingStatus } : {}),
       ...(query.search
@@ -45,15 +50,39 @@ export class AnimalsService {
     return buildResult(items, total, page, pageSize);
   }
 
-  findOne(id: string): Promise<Animal> {
-    return this.getOrThrow(id);
+  async findOne(id: string, currentUser: JwtPayload): Promise<Animal> {
+    const animal = await this.getOrThrow(id);
+    this.assertOwnership(animal, currentUser);
+    return animal;
   }
 
-  async create(dto: CreateAnimalDto): Promise<Animal> {
-    await this.assertFarmer(dto.farmerId);
+  async listBreedingHistory(
+    id: string,
+    currentUser: JwtPayload,
+  ): Promise<BreedingHistory[]> {
+    const animal = await this.getOrThrow(id);
+    this.assertOwnership(animal, currentUser);
+    return this.prisma.breedingHistory.findMany({
+      where: { animalId: id },
+      orderBy: { inseminationDate: 'desc' },
+      include: {
+        booking: {
+          select: {
+            batch: {
+              select: { sire: { select: { id: true, name: true, species: true } } },
+            },
+          },
+        },
+      },
+    });
+  }
+
+  async create(dto: CreateAnimalDto, currentUser: JwtPayload): Promise<Animal> {
+    const farmerId = this.resolveFarmerId(dto.farmerId, currentUser);
+    await this.assertFarmer(farmerId);
     try {
       return await this.prisma.animal.create({
-        data: dto,
+        data: { ...dto, farmerId },
         include: animalInclude,
       });
     } catch (err) {
@@ -61,16 +90,45 @@ export class AnimalsService {
     }
   }
 
-  async update(id: string, dto: UpdateAnimalDto): Promise<Animal> {
-    await this.getOrThrow(id);
+  async update(
+    id: string,
+    dto: UpdateAnimalDto,
+    currentUser: JwtPayload,
+  ): Promise<Animal> {
+    const current = await this.getOrThrow(id);
+    this.assertOwnership(current, currentUser);
+    // Farmers manage their own animal's details but not the admin soft-delete flag.
+    const data = currentUser.role === Role.FARMER ? { ...dto, isActive: undefined } : dto;
     try {
       return await this.prisma.animal.update({
         where: { id },
-        data: dto,
+        data,
         include: animalInclude,
       });
     } catch (err) {
       throw this.mapError(err);
+    }
+  }
+
+  private resolveFarmerId(
+    dtoFarmerId: string | undefined,
+    currentUser: JwtPayload,
+  ): string {
+    if (currentUser.role === Role.FARMER) return currentUser.sub;
+    if (currentUser.role === Role.ADMIN) {
+      if (!dtoFarmerId) {
+        throw new BadRequestException(
+          'farmerId is required when creating an animal on behalf of a farmer',
+        );
+      }
+      return dtoFarmerId;
+    }
+    throw new ForbiddenException('Insufficient role');
+  }
+
+  private assertOwnership(animal: Animal, currentUser: JwtPayload): void {
+    if (currentUser.role === Role.FARMER && animal.farmerId !== currentUser.sub) {
+      throw new NotFoundException('Animal not found');
     }
   }
 

@@ -5,3 +5,7 @@ export * from "./auth";
 export * from "./pagination";
 export * from "./users";
 export * from "./masters";
+export * from "./bookings";
+export * from "./notifications";
+export * from "./reports";
+export * from "./settings";
