@@ -1,6 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "buildCommand": "pnpm exec prisma generate && pnpm run build",
+  "outputDirectory": "public",
   "functions": {
     "api/index.ts": {
       "maxDuration": 30
