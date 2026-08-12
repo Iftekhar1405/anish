@@ -1,4 +1,3 @@
-import * as Notifications from "expo-notifications";
 import { Platform } from "react-native";
 import { apiClient } from "../lib/api";
 
@@ -10,6 +9,11 @@ import { apiClient } from "../lib/api";
 export async function registerForPushNotifications(): Promise<void> {
   if (Platform.OS === "web") return;
   try {
+    // Imported lazily on purpose: in Expo Go on Android, `expo-notifications`
+    // throws at module scope (remote push was removed in SDK 53). A static
+    // import would break evaluation of the layout that imports this file,
+    // taking the whole route group down instead of degrading gracefully.
+    const Notifications = await import("expo-notifications");
     const settings = await Notifications.getPermissionsAsync();
     let status = settings.status;
     if (status !== "granted") {
