@@ -9,7 +9,10 @@ export class HealthController {
   async check(): Promise<{ status: 'ok'; database: 'connected' }> {
     try {
       await this.prisma.$queryRaw`SELECT 1`;
-    } catch {
+    } catch (err) {
+      // Log the real Prisma error so the cause is visible in Vercel logs
+      // instead of being swallowed behind a generic 503.
+      console.error('[health] DB check failed:', err);
       throw new ServiceUnavailableException('Database connection failed');
     }
     return { status: 'ok', database: 'connected' };

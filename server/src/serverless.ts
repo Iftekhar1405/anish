@@ -31,7 +31,19 @@ export default async function handler(
   req: Request,
   res: Response,
 ): Promise<void> {
-  cachedApp ??= bootstrap();
-  const app = await cachedApp;
-  app(req, res);
+  try {
+    cachedApp ??= bootstrap();
+    const app = await cachedApp;
+    app(req, res);
+  } catch (err) {
+    // A failed bootstrap must not poison the cached promise, or every
+    // subsequent request on this warm instance would crash too. Reset it so
+    // the next invocation retries, and return a handled 500 instead of
+    // FUNCTION_INVOCATION_FAILED.
+    cachedApp = undefined;
+    console.error('[serverless] bootstrap failed:', err);
+    res.statusCode = 500;
+    res.setHeader('content-type', 'application/json');
+    res.end(JSON.stringify({ error: 'Server initialization failed' }));
+  }
 }
