@@ -5,6 +5,7 @@ import {
   Building2,
   ChevronRight,
   Dna,
+  Map,
   MapPin,
   Milk,
   PawPrint,
@@ -59,7 +60,7 @@ const MASTERS: MasterLink[] = [
     href: "/masters/service-areas",
     title: "Service Areas",
     description: "Coverage areas within districts",
-    Icon: MapPin,
+    Icon: Map,
   },
 ];
 

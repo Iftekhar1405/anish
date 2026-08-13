@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Pressable, Text, View, useWindowDimensions } from "react-native";
+import { Pressable, ScrollView, Text, View, useWindowDimensions } from "react-native";
 import { ChevronDown, ChevronUp, ChevronsUpDown } from "lucide-react-native";
 import { Button } from "./Button";
 import { Card } from "./Card";
@@ -38,6 +38,12 @@ export interface TableProps<T> {
   mobileBreakpoint?: number;
   /** Width (px) of the desktop actions column — widen if renderActions renders more than one button. */
   actionsColumnWidth?: number;
+  /**
+   * Scrolls its own rows and fills the available height, keeping pagination pinned below.
+   * Set false when the table is already inside a page-level ScrollView — nesting two
+   * vertical scroll views breaks scrolling on both.
+   */
+  scrollable?: boolean;
 }
 
 const DEFAULT_BREAKPOINT = 640;
@@ -61,6 +67,7 @@ export function Table<T>({
   onPageChange,
   mobileBreakpoint = DEFAULT_BREAKPOINT,
   actionsColumnWidth = DEFAULT_ACTIONS_COLUMN_WIDTH,
+  scrollable = true,
 }: TableProps<T>) {
   const { width } = useWindowDimensions();
   const isMobile = width < mobileBreakpoint;
@@ -124,84 +131,116 @@ export function Table<T>({
   }
 
   if (isMobile) {
+    const cards = data.map((row) => {
+      const actions = renderActions?.(row);
+      return (
+        <Card key={keyExtractor(row)} className="gap-2">
+          {columns
+            .filter((column) => !column.hideOnMobile)
+            .map((column) => (
+              <View key={column.key} className="flex-row justify-between gap-3">
+                <Text className="text-sm font-medium text-neutral-500">{column.header}</Text>
+                <Text className="flex-1 text-right text-sm text-neutral-900">
+                  {cellValue(column, row)}
+                </Text>
+              </View>
+            ))}
+          {actions ? <View className="mt-2 flex-row justify-end gap-2">{actions}</View> : null}
+        </Card>
+      );
+    });
+
+    if (!scrollable) {
+      return (
+        <View className="gap-3">
+          {cards}
+          {pagination}
+        </View>
+      );
+    }
+
     return (
-      <View className="gap-3">
-        {data.map((row) => (
-          <Card key={keyExtractor(row)} className="gap-2">
-            {columns
-              .filter((column) => !column.hideOnMobile)
-              .map((column) => (
-                <View key={column.key} className="flex-row justify-between">
-                  <Text className="text-sm font-medium text-neutral-500">{column.header}</Text>
-                  <Text className="text-sm text-neutral-900">{cellValue(column, row)}</Text>
-                </View>
-              ))}
-            {renderActions ? (
-              <View className="mt-2 flex-row justify-end gap-2">{renderActions(row)}</View>
-            ) : null}
-          </Card>
-        ))}
+      <View className="flex-1">
+        <ScrollView
+          contentContainerClassName="gap-3 pb-2"
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          {cards}
+        </ScrollView>
+        {pagination}
+      </View>
+    );
+  }
+
+  const headerRow = (
+    <View className="flex-row bg-neutral-100 px-4 py-3">
+      {columns.map((column) => (
+        <Pressable
+          key={column.key}
+          disabled={!column.sortable}
+          onPress={() => toggleSort(column)}
+          className={cn(
+            "flex-1 flex-row items-center gap-1",
+            column.align === "right" ? "justify-end" : "",
+            column.align === "center" ? "justify-center" : "",
+          )}
+        >
+          <Text className="text-xs font-semibold uppercase text-neutral-500">{column.header}</Text>
+          {column.sortable ? (
+            <SortIcon active={sortKey === column.key} direction={sortDirection} />
+          ) : null}
+        </Pressable>
+      ))}
+      {renderActions ? <View style={{ width: actionsColumnWidth }} /> : null}
+    </View>
+  );
+
+  const bodyRows = data.map((row, index) => (
+    <View
+      key={keyExtractor(row)}
+      className={cn(
+        "flex-row items-center px-4 py-3",
+        index % 2 === 1 ? "bg-neutral-50" : "bg-white",
+      )}
+    >
+      {columns.map((column) => (
+        <View
+          key={column.key}
+          className={cn(
+            "flex-1",
+            column.align === "right" ? "items-end" : "",
+            column.align === "center" ? "items-center" : "",
+          )}
+        >
+          <Text className="text-sm text-neutral-900">{cellValue(column, row)}</Text>
+        </View>
+      ))}
+      {renderActions ? (
+        <View
+          className="flex-row items-center justify-end gap-2"
+          style={{ width: actionsColumnWidth }}
+        >
+          {renderActions(row)}
+        </View>
+      ) : null}
+    </View>
+  ));
+
+  if (!scrollable) {
+    return (
+      <View className="overflow-hidden rounded-lg border border-neutral-100">
+        {headerRow}
+        {bodyRows}
         {pagination}
       </View>
     );
   }
 
   return (
-    <View className="overflow-hidden rounded-lg border border-neutral-100">
-      <View className="flex-row bg-neutral-100 px-4 py-3">
-        {columns.map((column) => (
-          <Pressable
-            key={column.key}
-            disabled={!column.sortable}
-            onPress={() => toggleSort(column)}
-            className={cn(
-              "flex-1 flex-row items-center gap-1",
-              column.align === "right" ? "justify-end" : "",
-              column.align === "center" ? "justify-center" : "",
-            )}
-          >
-            <Text className="text-xs font-semibold uppercase text-neutral-500">
-              {column.header}
-            </Text>
-            {column.sortable ? (
-              <SortIcon active={sortKey === column.key} direction={sortDirection} />
-            ) : null}
-          </Pressable>
-        ))}
-        {renderActions ? <View style={{ width: actionsColumnWidth }} /> : null}
-      </View>
-
-      {data.map((row, index) => (
-        <View
-          key={keyExtractor(row)}
-          className={cn(
-            "flex-row items-center px-4 py-3",
-            index % 2 === 1 ? "bg-neutral-50" : "bg-white",
-          )}
-        >
-          {columns.map((column) => (
-            <View
-              key={column.key}
-              className={cn(
-                "flex-1",
-                column.align === "right" ? "items-end" : "",
-                column.align === "center" ? "items-center" : "",
-              )}
-            >
-              <Text className="text-sm text-neutral-900">{cellValue(column, row)}</Text>
-            </View>
-          ))}
-          {renderActions ? (
-            <View
-              className="flex-row items-center justify-end gap-2"
-              style={{ width: actionsColumnWidth }}
-            >
-              {renderActions(row)}
-            </View>
-          ) : null}
-        </View>
-      ))}
-
+    <View className="flex-1 overflow-hidden rounded-lg border border-neutral-100">
+      {headerRow}
+      <ScrollView keyboardShouldPersistTaps="handled">{bodyRows}</ScrollView>
       {pagination}
     </View>
   );

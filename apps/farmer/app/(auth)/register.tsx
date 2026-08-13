@@ -1,7 +1,14 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState, type ReactNode } from "react";
 import { Controller, useForm } from "react-hook-form";
-import { ActivityIndicator, Pressable, Text, TextInput, View } from "react-native";
+import {
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 import { useRouter, type Href } from "expo-router";
 import { ApiError } from "@ai-platform/api-client";
 import { registerFormSchema, type RegisterFormValues } from "@ai-platform/types";
@@ -34,7 +41,11 @@ export default function RegisterScreen() {
   });
 
   return (
-    <View className="flex-1 justify-center gap-4 bg-white p-6">
+    <ScrollView
+      className="flex-1 bg-white"
+      contentContainerClassName="grow justify-center gap-4 p-6"
+      keyboardShouldPersistTaps="handled"
+    >
       <View className="gap-1">
         <Text className="text-3xl font-bold text-neutral-900">Create account</Text>
         <Text className="text-sm text-neutral-500">
@@ -118,7 +129,7 @@ export default function RegisterScreen() {
           Already have an account? Sign in
         </Text>
       </Pressable>
-    </View>
+    </ScrollView>
   );
 }
 

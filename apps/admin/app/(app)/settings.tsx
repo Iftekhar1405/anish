@@ -1,4 +1,4 @@
-import { View } from "react-native";
+import { ScrollView } from "react-native";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
 import { ApiError } from "@ai-platform/api-client";
@@ -40,7 +40,11 @@ export default function SettingsScreen() {
   if (query.isLoading) return <Spinner label="Loading settings…" className="flex-1" />;
 
   return (
-    <View className="flex-1 gap-3 bg-neutral-50 p-4">
+    <ScrollView
+      className="flex-1 bg-neutral-50"
+      contentContainerClassName="gap-3 p-4"
+      keyboardShouldPersistTaps="handled"
+    >
       <Card className="gap-3">
         <Controller
           control={form.control}
@@ -74,6 +78,6 @@ export default function SettingsScreen() {
           Save
         </Button>
       </Card>
-    </View>
+    </ScrollView>
   );
 }

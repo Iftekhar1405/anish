@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { View } from "react-native";
+import { ScrollView } from "react-native";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
 import { ApiError } from "@ai-platform/api-client";
@@ -53,7 +53,13 @@ export default function NotificationsScreen() {
   });
 
   return (
-    <View className="flex-1 gap-3 bg-neutral-50 p-4">
+    // Compose form + history are one continuous page; the Table opts out of its own
+    // scrolling so the two don't fight over vertical gestures.
+    <ScrollView
+      className="flex-1 bg-neutral-50"
+      contentContainerClassName="gap-3 p-4"
+      keyboardShouldPersistTaps="handled"
+    >
       <Card className="gap-3">
         <Controller
           control={form.control}
@@ -124,7 +130,8 @@ export default function NotificationsScreen() {
         page={page}
         pageCount={query.data?.pageCount ?? 1}
         onPageChange={setPage}
+        scrollable={false}
       />
-    </View>
+    </ScrollView>
   );
 }

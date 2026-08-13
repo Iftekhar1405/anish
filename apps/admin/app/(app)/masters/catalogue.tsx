@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Image, Pressable, ScrollView, Text, View } from "react-native";
+import { Image, Pressable, Text, View } from "react-native";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
 import { ImagePlus, X } from "lucide-react-native";
@@ -235,195 +235,201 @@ export default function CatalogueScreen() {
           setEditing(null);
         }}
       >
-        <ScrollView className="max-h-[28rem]" keyboardShouldPersistTaps="handled">
-          <View className="gap-3">
-            {/* Image uploader */}
-            <View className="items-center gap-2">
-              {imageUrl ? (
-                <View>
-                  <Image
-                    source={{ uri: imageUrl }}
-                    className="h-28 w-28 rounded-lg bg-neutral-100"
-                  />
-                  <Pressable
-                    onPress={clearImage}
-                    className="absolute -right-2 -top-2 h-7 w-7 items-center justify-center rounded-full bg-neutral-900"
-                  >
-                    <X size={16} color="#FFFFFF" />
-                  </Pressable>
-                </View>
-              ) : (
+        <View className="gap-3">
+          {/* Image uploader */}
+          <View className="items-center gap-2">
+            {imageUrl ? (
+              // Padded so the absolutely-positioned remove button stays inside the
+              // parent's bounds — Android does not deliver touches to children
+              // rendered outside them.
+              <View className="p-2">
+                <Image
+                  source={{ uri: imageUrl }}
+                  className="h-28 w-28 rounded-lg bg-neutral-100"
+                />
                 <Pressable
-                  onPress={onPickImage}
-                  disabled={uploading}
-                  className="h-28 w-28 items-center justify-center rounded-lg border border-dashed border-neutral-300 bg-neutral-50"
+                  onPress={clearImage}
+                  hitSlop={12}
+                  accessibilityRole="button"
+                  accessibilityLabel="Remove photo"
+                  className="absolute right-0 top-0 h-9 w-9 items-center justify-center rounded-full bg-neutral-900"
                 >
-                  {uploading ? (
-                    <Spinner />
-                  ) : (
-                    <ImagePlus size={26} color="#9CA3AF" />
-                  )}
+                  <X size={18} color="#FFFFFF" />
                 </Pressable>
-              )}
-              <Text className="text-xs text-neutral-500">
-                {imageUrl ? "Tap ✕ to remove" : "Optional photo"}
-              </Text>
-            </View>
-
-            <Controller
-              control={form.control}
-              name="species"
-              render={({ field }) => (
-                <Select
-                  label="Species"
-                  value={field.value}
-                  options={speciesOptions}
-                  onChange={(v) => {
-                    field.onChange(v);
-                    form.setValue("breedId", "");
-                  }}
-                  error={form.formState.errors.species?.message}
-                />
-              )}
-            />
-            <Controller
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <Input
-                  label="Name"
-                  value={field.value}
-                  onChangeText={field.onChange}
-                  error={form.formState.errors.name?.message}
-                />
-              )}
-            />
-            <Controller
-              control={form.control}
-              name="breedId"
-              render={({ field }) => (
-                <Select
-                  label="Breed"
-                  placeholder={
-                    breedQuery.isLoading ? "Loading breeds…" : "Select a breed"
-                  }
-                  value={field.value || null}
-                  options={breedOptions}
-                  onChange={field.onChange}
-                  error={form.formState.errors.breedId?.message}
-                />
-              )}
-            />
-            <Controller
-              control={form.control}
-              name="organizationId"
-              render={({ field }) => (
-                <Select
-                  label="Organization (optional)"
-                  value={field.value || ""}
-                  options={orgOptions}
-                  onChange={field.onChange}
-                />
-              )}
-            />
-            <Controller
-              control={form.control}
-              name="fertilityRating"
-              render={({ field }) => (
-                <Select
-                  label="Fertility rating"
-                  value={field.value}
-                  options={fertilityOptions}
-                  onChange={field.onChange}
-                  error={form.formState.errors.fertilityRating?.message}
-                />
-              )}
-            />
-            <Controller
-              control={form.control}
-              name="strawPriceMinor"
-              render={({ field }) => (
-                <Input
-                  label="Straw price (in paise)"
-                  keyboardType="number-pad"
-                  value={field.value ?? ""}
-                  onChangeText={field.onChange}
-                  error={form.formState.errors.strawPriceMinor?.message}
-                />
-              )}
-            />
-
-            {species === "CATTLE" ? (
-              <>
-                <Controller
-                  control={form.control}
-                  name="geneticScore"
-                  render={({ field }) => (
-                    <Input
-                      label="Genetic score (optional)"
-                      keyboardType="decimal-pad"
-                      value={field.value ?? ""}
-                      onChangeText={field.onChange}
-                      error={form.formState.errors.geneticScore?.message}
-                    />
-                  )}
-                />
-                <Controller
-                  control={form.control}
-                  name="milkYieldPotential"
-                  render={({ field }) => (
-                    <Input
-                      label="Milk yield potential (optional)"
-                      keyboardType="number-pad"
-                      value={field.value ?? ""}
-                      onChangeText={field.onChange}
-                      error={form.formState.errors.milkYieldPotential?.message}
-                    />
-                  )}
-                />
-                <Controller
-                  control={form.control}
-                  name="fatPct"
-                  render={({ field }) => (
-                    <Input
-                      label="Fat % (optional)"
-                      keyboardType="decimal-pad"
-                      value={field.value ?? ""}
-                      onChangeText={field.onChange}
-                      error={form.formState.errors.fatPct?.message}
-                    />
-                  )}
-                />
-              </>
+              </View>
             ) : (
+              <Pressable
+                onPress={onPickImage}
+                disabled={uploading}
+                accessibilityRole="button"
+                accessibilityLabel="Add photo"
+                className="h-28 w-28 items-center justify-center rounded-lg border border-dashed border-neutral-300 bg-neutral-50"
+              >
+                {uploading ? (
+                  <Spinner />
+                ) : (
+                  <ImagePlus size={26} color="#9CA3AF" />
+                )}
+              </Pressable>
+            )}
+            <Text className="text-xs text-neutral-500">
+              {imageUrl ? "Tap the ✕ to remove" : "Optional photo"}
+            </Text>
+          </View>
+
+          <Controller
+            control={form.control}
+            name="species"
+            render={({ field }) => (
+              <Select
+                label="Species"
+                value={field.value}
+                options={speciesOptions}
+                onChange={(v) => {
+                  field.onChange(v);
+                  form.setValue("breedId", "");
+                }}
+                error={form.formState.errors.species?.message}
+              />
+            )}
+          />
+          <Controller
+            control={form.control}
+            name="name"
+            render={({ field }) => (
+              <Input
+                label="Name"
+                value={field.value}
+                onChangeText={field.onChange}
+                error={form.formState.errors.name?.message}
+              />
+            )}
+          />
+          <Controller
+            control={form.control}
+            name="breedId"
+            render={({ field }) => (
+              <Select
+                label="Breed"
+                placeholder={
+                  breedQuery.isLoading ? "Loading breeds…" : "Select a breed"
+                }
+                value={field.value || null}
+                options={breedOptions}
+                onChange={field.onChange}
+                error={form.formState.errors.breedId?.message}
+              />
+            )}
+          />
+          <Controller
+            control={form.control}
+            name="organizationId"
+            render={({ field }) => (
+              <Select
+                label="Organization (optional)"
+                value={field.value || ""}
+                options={orgOptions}
+                onChange={field.onChange}
+              />
+            )}
+          />
+          <Controller
+            control={form.control}
+            name="fertilityRating"
+            render={({ field }) => (
+              <Select
+                label="Fertility rating"
+                value={field.value}
+                options={fertilityOptions}
+                onChange={field.onChange}
+                error={form.formState.errors.fertilityRating?.message}
+              />
+            )}
+          />
+          <Controller
+            control={form.control}
+            name="strawPriceMinor"
+            render={({ field }) => (
+              <Input
+                label="Straw price (in paise)"
+                keyboardType="number-pad"
+                value={field.value ?? ""}
+                onChangeText={field.onChange}
+                error={form.formState.errors.strawPriceMinor?.message}
+              />
+            )}
+          />
+
+          {species === "CATTLE" ? (
+            <>
               <Controller
                 control={form.control}
-                name="growthIndex"
+                name="geneticScore"
                 render={({ field }) => (
                   <Input
-                    label="Growth index (optional)"
+                    label="Genetic score (optional)"
                     keyboardType="decimal-pad"
                     value={field.value ?? ""}
                     onChangeText={field.onChange}
-                    error={form.formState.errors.growthIndex?.message}
+                    error={form.formState.errors.geneticScore?.message}
                   />
                 )}
               />
-            )}
-
-            {editing ? (
-              <Select
-                label="Availability"
-                value={available ? "yes" : "no"}
-                options={[
-                  { label: "Available", value: "yes" },
-                  { label: "Unavailable", value: "no" },
-                ]}
-                onChange={(v) => setAvailable(v === "yes")}
+              <Controller
+                control={form.control}
+                name="milkYieldPotential"
+                render={({ field }) => (
+                  <Input
+                    label="Milk yield potential (optional)"
+                    keyboardType="number-pad"
+                    value={field.value ?? ""}
+                    onChangeText={field.onChange}
+                    error={form.formState.errors.milkYieldPotential?.message}
+                  />
+                )}
               />
-            ) : null}
-          </View>
-        </ScrollView>
+              <Controller
+                control={form.control}
+                name="fatPct"
+                render={({ field }) => (
+                  <Input
+                    label="Fat % (optional)"
+                    keyboardType="decimal-pad"
+                    value={field.value ?? ""}
+                    onChangeText={field.onChange}
+                    error={form.formState.errors.fatPct?.message}
+                  />
+                )}
+              />
+            </>
+          ) : (
+            <Controller
+              control={form.control}
+              name="growthIndex"
+              render={({ field }) => (
+                <Input
+                  label="Growth index (optional)"
+                  keyboardType="decimal-pad"
+                  value={field.value ?? ""}
+                  onChangeText={field.onChange}
+                  error={form.formState.errors.growthIndex?.message}
+                />
+              )}
+            />
+          )}
+
+          {editing ? (
+            <Select
+              label="Availability"
+              value={available ? "yes" : "no"}
+              options={[
+                { label: "Available", value: "yes" },
+                { label: "Unavailable", value: "no" },
+              ]}
+              onChange={(v) => setAvailable(v === "yes")}
+            />
+          ) : null}
+        </View>
       </Dialog>
     </View>
   );

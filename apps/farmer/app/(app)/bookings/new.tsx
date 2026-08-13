@@ -92,7 +92,11 @@ export default function NewBookingScreen() {
   }
 
   return (
-    <ScrollView className="flex-1 bg-neutral-50" contentContainerClassName="gap-4 p-4">
+    <ScrollView
+      className="flex-1 bg-neutral-50"
+      contentContainerClassName="gap-4 p-4"
+      keyboardShouldPersistTaps="handled"
+    >
       <Controller
         control={form.control}
         name="animalId"

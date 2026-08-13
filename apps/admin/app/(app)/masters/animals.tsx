@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ScrollView, View } from "react-native";
+import { View } from "react-native";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
 import { ApiError } from "@ai-platform/api-client";
@@ -173,104 +173,102 @@ export default function AnimalsScreen() {
           setEditing(null);
         }}
       >
-        <ScrollView className="max-h-[26rem]" keyboardShouldPersistTaps="handled">
-          <View className="gap-3">
-            <Controller
-              control={form.control}
-              name="farmerId"
-              render={({ field }) => (
-                <Select
-                  label="Farmer (owner)"
-                  placeholder={
-                    farmerQuery.isLoading ? "Loading farmers…" : "Select a farmer"
-                  }
-                  value={field.value || null}
-                  options={farmerOptions}
-                  onChange={field.onChange}
-                  disabled={editing !== null}
-                  error={form.formState.errors.farmerId?.message}
-                />
-              )}
-            />
-            <Controller
-              control={form.control}
-              name="species"
-              render={({ field }) => (
-                <Select
-                  label="Species"
-                  value={field.value}
-                  options={speciesOptions}
-                  onChange={(v) => {
-                    field.onChange(v);
-                    form.setValue("breedId", "");
-                  }}
-                  error={form.formState.errors.species?.message}
-                />
-              )}
-            />
-            <Controller
-              control={form.control}
-              name="breedId"
-              render={({ field }) => (
-                <Select
-                  label="Breed (optional)"
-                  value={field.value || ""}
-                  options={breedOptions}
-                  onChange={field.onChange}
-                />
-              )}
-            />
-            <Controller
-              control={form.control}
-              name="tag"
-              render={({ field }) => (
-                <Input
-                  label="Tag"
-                  autoCapitalize="characters"
-                  value={field.value}
-                  onChangeText={field.onChange}
-                  error={form.formState.errors.tag?.message}
-                />
-              )}
-            />
-            <Controller
-              control={form.control}
-              name="ageMonths"
-              render={({ field }) => (
-                <Input
-                  label="Age in months (optional)"
-                  keyboardType="number-pad"
-                  value={field.value ?? ""}
-                  onChangeText={field.onChange}
-                  error={form.formState.errors.ageMonths?.message}
-                />
-              )}
-            />
-            <Controller
-              control={form.control}
-              name="breedingStatus"
-              render={({ field }) => (
-                <Select
-                  label="Breeding status"
-                  value={field.value}
-                  options={statusOptions}
-                  onChange={field.onChange}
-                />
-              )}
-            />
-            {editing ? (
+        <View className="gap-3">
+          <Controller
+            control={form.control}
+            name="farmerId"
+            render={({ field }) => (
               <Select
-                label="Active"
-                value={activeFlag ? "yes" : "no"}
-                options={[
-                  { label: "Active", value: "yes" },
-                  { label: "Inactive", value: "no" },
-                ]}
-                onChange={(v) => setActiveFlag(v === "yes")}
+                label="Farmer (owner)"
+                placeholder={
+                  farmerQuery.isLoading ? "Loading farmers…" : "Select a farmer"
+                }
+                value={field.value || null}
+                options={farmerOptions}
+                onChange={field.onChange}
+                disabled={editing !== null}
+                error={form.formState.errors.farmerId?.message}
               />
-            ) : null}
-          </View>
-        </ScrollView>
+            )}
+          />
+          <Controller
+            control={form.control}
+            name="species"
+            render={({ field }) => (
+              <Select
+                label="Species"
+                value={field.value}
+                options={speciesOptions}
+                onChange={(v) => {
+                  field.onChange(v);
+                  form.setValue("breedId", "");
+                }}
+                error={form.formState.errors.species?.message}
+              />
+            )}
+          />
+          <Controller
+            control={form.control}
+            name="breedId"
+            render={({ field }) => (
+              <Select
+                label="Breed (optional)"
+                value={field.value || ""}
+                options={breedOptions}
+                onChange={field.onChange}
+              />
+            )}
+          />
+          <Controller
+            control={form.control}
+            name="tag"
+            render={({ field }) => (
+              <Input
+                label="Tag"
+                autoCapitalize="characters"
+                value={field.value}
+                onChangeText={field.onChange}
+                error={form.formState.errors.tag?.message}
+              />
+            )}
+          />
+          <Controller
+            control={form.control}
+            name="ageMonths"
+            render={({ field }) => (
+              <Input
+                label="Age in months (optional)"
+                keyboardType="number-pad"
+                value={field.value ?? ""}
+                onChangeText={field.onChange}
+                error={form.formState.errors.ageMonths?.message}
+              />
+            )}
+          />
+          <Controller
+            control={form.control}
+            name="breedingStatus"
+            render={({ field }) => (
+              <Select
+                label="Breeding status"
+                value={field.value}
+                options={statusOptions}
+                onChange={field.onChange}
+              />
+            )}
+          />
+          {editing ? (
+            <Select
+              label="Active"
+              value={activeFlag ? "yes" : "no"}
+              options={[
+                { label: "Active", value: "yes" },
+                { label: "Inactive", value: "no" },
+              ]}
+              onChange={(v) => setActiveFlag(v === "yes")}
+            />
+        ) : null}
+        </View>
       </Dialog>
     </View>
   );

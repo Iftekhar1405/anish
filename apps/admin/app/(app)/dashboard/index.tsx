@@ -4,7 +4,7 @@ import {
   Boxes,
   CalendarClock,
   ChevronRight,
-  Milk,
+  HeartPulse,
   UserCheck,
   Users,
   Wrench,
@@ -43,7 +43,7 @@ const REPORTS: ReportLink[] = [
     href: "/dashboard/conception-report",
     title: "Conception statistics",
     description: "Animals by breeding status",
-    Icon: Milk,
+    Icon: HeartPulse,
   },
 ];
 

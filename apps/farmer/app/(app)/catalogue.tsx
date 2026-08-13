@@ -61,6 +61,7 @@ export default function CatalogueScreen() {
           data={items}
           keyExtractor={(item) => item.id}
           contentContainerClassName="gap-3 pb-6"
+          keyboardShouldPersistTaps="handled"
           renderItem={({ item }) => <SireCard sire={item} />}
         />
       )}

@@ -1,4 +1,5 @@
-import { ActivityIndicator, Pressable, Text, type PressableProps } from "react-native";
+import { ActivityIndicator, Pressable, Text, View, type PressableProps } from "react-native";
+import type { LucideIcon } from "lucide-react-native";
 import { cn } from "./utils/cn";
 
 export type ButtonVariant = "primary" | "secondary" | "outline" | "destructive" | "ghost";
@@ -10,6 +11,8 @@ export interface ButtonProps extends Omit<PressableProps, "children" | "disabled
   size?: ButtonSize;
   disabled?: boolean;
   loading?: boolean;
+  /** Optional leading lucide icon — keeps labels like "New booking" off ASCII glyphs. */
+  icon?: LucideIcon;
   className?: string;
 }
 
@@ -29,14 +32,28 @@ const VARIANT_TEXT: Record<ButtonVariant, string> = {
   ghost: "text-primary-600",
 };
 
+// min-h keeps every button at/above the 44px minimum touch target.
 const SIZE_CONTAINER: Record<ButtonSize, string> = {
-  sm: "px-4 py-2",
-  md: "px-6 py-3",
+  sm: "min-h-11 px-4 py-2",
+  md: "min-h-12 px-6 py-3",
 };
 
 const SIZE_TEXT: Record<ButtonSize, string> = {
   sm: "text-sm",
   md: "text-base",
+};
+
+const SIZE_ICON: Record<ButtonSize, number> = {
+  sm: 16,
+  md: 18,
+};
+
+const VARIANT_ICON_COLOR: Record<ButtonVariant, string> = {
+  primary: "#FFFFFF",
+  secondary: "#111827",
+  outline: "#15803D",
+  destructive: "#FFFFFF",
+  ghost: "#15803D",
 };
 
 const SPINNER_COLOR: Record<ButtonVariant, string> = {
@@ -53,6 +70,7 @@ export function Button({
   size = "md",
   disabled = false,
   loading = false,
+  icon: Icon,
   className,
   ...pressableProps
 }: ButtonProps) {
@@ -61,10 +79,11 @@ export function Button({
   return (
     <Pressable
       accessibilityRole="button"
+      accessibilityLabel={children}
       accessibilityState={{ disabled: isDisabled, busy: loading }}
       disabled={isDisabled}
       className={cn(
-        "flex-row items-center justify-center rounded-md",
+        "flex-row items-center justify-center gap-2 rounded-md",
         VARIANT_CONTAINER[variant],
         SIZE_CONTAINER[size],
         isDisabled && "opacity-50",
@@ -75,9 +94,16 @@ export function Button({
       {loading ? (
         <ActivityIndicator color={SPINNER_COLOR[variant]} />
       ) : (
-        <Text className={cn("font-semibold", VARIANT_TEXT[variant], SIZE_TEXT[size])}>
-          {children}
-        </Text>
+        <>
+          {Icon ? (
+            <View>
+              <Icon size={SIZE_ICON[size]} color={VARIANT_ICON_COLOR[variant]} />
+            </View>
+          ) : null}
+          <Text className={cn("font-semibold", VARIANT_TEXT[variant], SIZE_TEXT[size])}>
+            {children}
+          </Text>
+        </>
       )}
     </Pressable>
   );

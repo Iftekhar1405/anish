@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ScrollView, View } from "react-native";
+import { View } from "react-native";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
 import { ApiError } from "@ai-platform/api-client";
@@ -156,99 +156,97 @@ export default function BatchesScreen() {
           setEditing(null);
         }}
       >
-        <ScrollView className="max-h-[26rem]" keyboardShouldPersistTaps="handled">
-          <View className="gap-3">
-            <Controller
-              control={form.control}
-              name="sireId"
-              render={({ field }) => (
-                <Select
-                  label="Sire"
-                  placeholder={
-                    sireQuery.isLoading ? "Loading sires…" : "Select a sire"
-                  }
-                  value={field.value || null}
-                  options={sireOptions}
-                  onChange={field.onChange}
-                  disabled={editing !== null}
-                  error={form.formState.errors.sireId?.message}
-                />
-              )}
-            />
-            <Controller
-              control={form.control}
-              name="batchNumber"
-              render={({ field }) => (
-                <Input
-                  label="Batch number"
-                  autoCapitalize="characters"
-                  value={field.value}
-                  onChangeText={field.onChange}
-                  error={form.formState.errors.batchNumber?.message}
-                />
-              )}
-            />
-            <View className="flex-row gap-3">
-              <View className="flex-1">
-                <Controller
-                  control={form.control}
-                  name="quantityTotal"
-                  render={({ field }) => (
-                    <Input
-                      label="Total qty"
-                      keyboardType="number-pad"
-                      value={field.value ?? ""}
-                      onChangeText={field.onChange}
-                      error={form.formState.errors.quantityTotal?.message}
-                    />
-                  )}
-                />
-              </View>
-              <View className="flex-1">
-                <Controller
-                  control={form.control}
-                  name="quantityAvailable"
-                  render={({ field }) => (
-                    <Input
-                      label="Available qty"
-                      keyboardType="number-pad"
-                      value={field.value ?? ""}
-                      onChangeText={field.onChange}
-                      error={form.formState.errors.quantityAvailable?.message}
-                    />
-                  )}
-                />
-              </View>
+        <View className="gap-3">
+          <Controller
+            control={form.control}
+            name="sireId"
+            render={({ field }) => (
+              <Select
+                label="Sire"
+                placeholder={
+                  sireQuery.isLoading ? "Loading sires…" : "Select a sire"
+                }
+                value={field.value || null}
+                options={sireOptions}
+                onChange={field.onChange}
+                disabled={editing !== null}
+                error={form.formState.errors.sireId?.message}
+              />
+            )}
+          />
+          <Controller
+            control={form.control}
+            name="batchNumber"
+            render={({ field }) => (
+              <Input
+                label="Batch number"
+                autoCapitalize="characters"
+                value={field.value}
+                onChangeText={field.onChange}
+                error={form.formState.errors.batchNumber?.message}
+              />
+            )}
+          />
+          <View className="flex-row gap-3">
+            <View className="flex-1">
+              <Controller
+                control={form.control}
+                name="quantityTotal"
+                render={({ field }) => (
+                  <Input
+                    label="Total qty"
+                    keyboardType="number-pad"
+                    value={field.value ?? ""}
+                    onChangeText={field.onChange}
+                    error={form.formState.errors.quantityTotal?.message}
+                  />
+                )}
+              />
             </View>
-            <Controller
-              control={form.control}
-              name="producedOn"
-              render={({ field }) => (
-                <Input
-                  label="Produced on (YYYY-MM-DD, optional)"
-                  placeholder="2026-01-15"
-                  autoCapitalize="none"
-                  value={field.value ?? ""}
-                  onChangeText={field.onChange}
-                  error={form.formState.errors.producedOn?.message}
-                />
-              )}
-            />
-            <Controller
-              control={form.control}
-              name="notes"
-              render={({ field }) => (
-                <Input
-                  label="Notes (optional)"
-                  multiline
-                  value={field.value ?? ""}
-                  onChangeText={field.onChange}
-                  error={form.formState.errors.notes?.message}
-                />
-              )}
-            />
+            <View className="flex-1">
+              <Controller
+                control={form.control}
+                name="quantityAvailable"
+                render={({ field }) => (
+                  <Input
+                    label="Available qty"
+                    keyboardType="number-pad"
+                    value={field.value ?? ""}
+                    onChangeText={field.onChange}
+                    error={form.formState.errors.quantityAvailable?.message}
+                  />
+                )}
+              />
+            </View>
           </View>
-        </ScrollView>
+          <Controller
+            control={form.control}
+            name="producedOn"
+            render={({ field }) => (
+              <Input
+                label="Produced on (YYYY-MM-DD, optional)"
+                placeholder="2026-01-15"
+                autoCapitalize="none"
+                value={field.value ?? ""}
+                onChangeText={field.onChange}
+                error={form.formState.errors.producedOn?.message}
+              />
+            )}
+          />
+          <Controller
+            control={form.control}
+            name="notes"
+            render={({ field }) => (
+              <Input
+                label="Notes (optional)"
+                multiline
+                value={field.value ?? ""}
+                onChangeText={field.onChange}
+                error={form.formState.errors.notes?.message}
+              />
+            )}
+          />
+        </View>
       </Dialog>
     </View>
   );

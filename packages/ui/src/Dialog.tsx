@@ -1,5 +1,15 @@
 import { useEffect, useRef, type ReactNode } from "react";
-import { Animated, Modal, Platform, Pressable, Text, View } from "react-native";
+import {
+  Animated,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  Text,
+  View,
+  useWindowDimensions,
+} from "react-native";
 import { Button } from "./Button";
 import { cn } from "./utils/cn";
 
@@ -31,6 +41,9 @@ export function Dialog({
 }: DialogProps) {
   const progress = useRef(new Animated.Value(0)).current;
   const isWeb = Platform.OS === "web";
+  const { height } = useWindowDimensions();
+  // Keeps a long form (and the footer buttons) on screen instead of overflowing off the bottom.
+  const bodyMaxHeight = Math.round(height * 0.55);
 
   useEffect(() => {
     Animated.timing(progress, {
@@ -42,46 +55,68 @@ export function Dialog({
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
-      <Pressable
-        className={cn("flex-1 bg-black/40", isWeb ? "items-center justify-center" : "justify-end")}
-        onPress={onCancel}
+      <KeyboardAvoidingView
+        className="flex-1"
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
-        <Animated.View
-          style={{
-            opacity: progress,
-            transform: isWeb
-              ? [{ scale: progress.interpolate({ inputRange: [0, 1], outputRange: [0.95, 1] }) }]
-              : [{ translateY: progress.interpolate({ inputRange: [0, 1], outputRange: [24, 0] }) }],
-          }}
+        <Pressable
+          className={cn("flex-1 bg-black/40", isWeb ? "items-center justify-center" : "justify-end")}
+          onPress={onCancel}
         >
-          <Pressable
-            onPress={(event) => event.stopPropagation()}
-            className={cn(
-              "bg-white p-6 shadow-lg",
-              isWeb ? "w-full max-w-sm rounded-lg" : "w-full rounded-t-xl",
-            )}
+          <Animated.View
+            className={cn("w-full", isWeb ? "max-w-sm" : "")}
+            style={{
+              opacity: progress,
+              transform: isWeb
+                ? [{ scale: progress.interpolate({ inputRange: [0, 1], outputRange: [0.95, 1] }) }]
+                : [
+                    {
+                      translateY: progress.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [24, 0],
+                      }),
+                    },
+                  ],
+            }}
           >
-            <Text className="text-lg font-semibold text-neutral-900">{title}</Text>
-            {description ? (
-              <Text className="mt-2 text-sm text-neutral-500">{description}</Text>
-            ) : null}
-            {children ? <View className="mt-4">{children}</View> : null}
-            <View className="mt-6 flex-row justify-end gap-3">
-              <Button variant="secondary" size="sm" onPress={onCancel} disabled={loading}>
-                {cancelLabel}
-              </Button>
-              <Button
-                variant={destructive ? "destructive" : "primary"}
-                size="sm"
-                onPress={onConfirm}
-                loading={loading}
-              >
-                {confirmLabel}
-              </Button>
-            </View>
-          </Pressable>
-        </Animated.View>
-      </Pressable>
+            <Pressable
+              onPress={(event) => event.stopPropagation()}
+              className={cn(
+                "w-full bg-white px-6 pt-6 shadow-lg",
+                isWeb ? "rounded-lg pb-6" : "rounded-t-xl pb-8",
+              )}
+            >
+              <Text className="text-lg font-semibold text-neutral-900">{title}</Text>
+              {description ? (
+                <Text className="mt-2 text-sm text-neutral-500">{description}</Text>
+              ) : null}
+              {children ? (
+                <ScrollView
+                  className="mt-4"
+                  style={{ maxHeight: bodyMaxHeight }}
+                  keyboardShouldPersistTaps="handled"
+                  showsVerticalScrollIndicator={false}
+                >
+                  {children}
+                </ScrollView>
+              ) : null}
+              <View className="mt-6 flex-row justify-end gap-3">
+                <Button variant="secondary" size="sm" onPress={onCancel} disabled={loading}>
+                  {cancelLabel}
+                </Button>
+                <Button
+                  variant={destructive ? "destructive" : "primary"}
+                  size="sm"
+                  onPress={onConfirm}
+                  loading={loading}
+                >
+                  {confirmLabel}
+                </Button>
+              </View>
+            </Pressable>
+          </Animated.View>
+        </Pressable>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }

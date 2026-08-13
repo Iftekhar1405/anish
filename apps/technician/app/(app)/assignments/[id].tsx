@@ -83,7 +83,11 @@ export default function AssignmentDetailScreen() {
   }
 
   return (
-    <ScrollView className="flex-1 bg-neutral-50" contentContainerClassName="gap-3 p-4">
+    <ScrollView
+      className="flex-1 bg-neutral-50"
+      contentContainerClassName="gap-3 p-4"
+      keyboardShouldPersistTaps="handled"
+    >
       <Card className="gap-3">
         <View className="flex-row items-center justify-between">
           <Text className="text-lg font-semibold text-neutral-900">

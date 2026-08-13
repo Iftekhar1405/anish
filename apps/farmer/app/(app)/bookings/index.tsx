@@ -28,8 +28,8 @@ export default function BookingsScreen() {
 
   return (
     <View className="flex-1 gap-3 bg-neutral-50 p-4">
-      <Button onPress={() => router.push("/bookings/new" as Href)}>
-        + New booking
+      <Button icon={Plus} onPress={() => router.push("/bookings/new" as Href)}>
+        New booking
       </Button>
 
       {query.isLoading ? (
@@ -58,6 +58,7 @@ export default function BookingsScreen() {
           data={items}
           keyExtractor={(item) => item.id}
           contentContainerClassName="gap-3 pb-6"
+          keyboardShouldPersistTaps="handled"
           renderItem={({ item }) => <BookingCard booking={item} />}
         />
       )}

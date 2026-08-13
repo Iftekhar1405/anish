@@ -111,7 +111,12 @@ function ToastCard({ toast, onDismiss }: { toast: ToastItem; onDismiss: () => vo
     >
       <Icon size={20} color={VARIANT_COLOR[toast.variant]} />
       <Text className="ml-3 flex-1 text-sm text-neutral-900">{toast.message}</Text>
-      <Pressable onPress={onDismiss} hitSlop={8}>
+      <Pressable
+        onPress={onDismiss}
+        hitSlop={14}
+        accessibilityRole="button"
+        accessibilityLabel="Dismiss notification"
+      >
         <X size={16} color="#6B7280" />
       </Pressable>
     </Animated.View>
