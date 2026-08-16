@@ -6,6 +6,8 @@ export interface CreateBookingInput {
   animalId: string;
   batchId: string;
   preferredDate: string;
+  /** Where the technician should come for this visit. */
+  location?: string;
   notes?: string;
 }
 

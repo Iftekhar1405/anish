@@ -1,4 +1,10 @@
-export { ApiClient, ApiError, createApiClient } from "./http-client";
+export {
+  ApiClient,
+  ApiError,
+  NetworkError,
+  createApiClient,
+  errorMessage,
+} from "./http-client";
 export type { ApiClientConfig } from "./http-client";
 export { createQueryClient } from "./query-client";
 export { createAuthApi } from "./auth-api";

@@ -10,6 +10,12 @@ export class CreateBookingDto {
   @IsISO8601()
   preferredDate!: string;
 
+  /** Where the technician should go for this visit (defaults to the farmer's address). */
+  @IsOptional()
+  @IsString()
+  @MaxLength(300)
+  location?: string;
+
   @IsOptional()
   @IsString()
   @MaxLength(500)

@@ -3,11 +3,14 @@ import { View } from "react-native";
 import { useRouter, type Href } from "expo-router";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
-import { ApiError } from "@ai-platform/api-client";
+import { errorMessage } from "@ai-platform/api-client";
 import { Button, Dialog, Input, Select, Table, useToast } from "@ai-platform/ui";
 import {
+  breedLabel,
   farmerAnimalFormSchema,
+  OTHER_BREED_VALUE,
   SPECIES,
+  toBreedChoice,
   type Animal,
   type FarmerAnimalFormInput,
   type FarmerAnimalFormValues,
@@ -17,6 +20,14 @@ import { useBreeds } from "../../../src/features/breeds/hooks";
 
 const PAGE_SIZE = 10;
 const speciesOptions = SPECIES.map((s) => ({ label: s, value: s }));
+
+const EMPTY_FORM: FarmerAnimalFormInput = {
+  species: "CATTLE",
+  breedId: "",
+  breedOther: "",
+  tag: "",
+  ageMonths: "",
+};
 
 export default function AnimalsScreen() {
   const router = useRouter();
@@ -32,18 +43,22 @@ export default function AnimalsScreen() {
 
   const form = useForm<FarmerAnimalFormInput, unknown, FarmerAnimalFormValues>({
     resolver: zodResolver(farmerAnimalFormSchema),
-    defaultValues: { species: "CATTLE", breedId: "", tag: "", ageMonths: "" },
+    defaultValues: EMPTY_FORM,
   });
 
   const species = form.watch("species");
+  const breedChoice = form.watch("breedId");
   const breedQuery = useBreeds(species);
+  // Farmers frequently don't know the registered breed — and the master list
+  // may not carry theirs — so "Other" always sits at the bottom of the list.
   const breedOptions = [
-    { label: "None", value: "" },
+    { label: "Not sure / none", value: "" },
     ...(breedQuery.data?.items ?? []).map((b) => ({ label: b.name, value: b.id })),
+    { label: "Other — type it in", value: OTHER_BREED_VALUE },
   ];
 
   function openCreate(): void {
-    form.reset({ species: "CATTLE", breedId: "", tag: "", ageMonths: "" });
+    form.reset(EMPTY_FORM);
     setCreating(true);
   }
 
@@ -51,7 +66,7 @@ export default function AnimalsScreen() {
     setEditing(row);
     form.reset({
       species: row.species,
-      breedId: row.breedId ?? "",
+      ...toBreedChoice(row),
       tag: row.tag,
       ageMonths: row.ageMonths != null ? String(row.ageMonths) : "",
     });
@@ -62,7 +77,12 @@ export default function AnimalsScreen() {
       if (editing) {
         await update.mutateAsync({
           id: editing.id,
-          input: { breedId: values.breedId, tag: values.tag, ageMonths: values.ageMonths },
+          input: {
+            breedId: values.breedId,
+            breedOther: values.breedOther,
+            tag: values.tag,
+            ageMonths: values.ageMonths,
+          },
         });
         toast.show("Animal updated", "success");
         setEditing(null);
@@ -72,10 +92,7 @@ export default function AnimalsScreen() {
         setCreating(false);
       }
     } catch (err) {
-      toast.show(
-        err instanceof ApiError ? err.message : "Could not save animal",
-        "error",
-      );
+      toast.show(errorMessage(err, "Could not save animal"), "error");
     }
   });
 
@@ -84,7 +101,7 @@ export default function AnimalsScreen() {
       <View className="flex-row gap-2">
         <View className="flex-1">
           <Input
-            placeholder="Search by tag"
+            placeholder="Search by tag / number / name"
             value={search}
             onChangeText={(t) => {
               setSearch(t);
@@ -99,9 +116,9 @@ export default function AnimalsScreen() {
 
       <Table<Animal>
         columns={[
-          { key: "tag", header: "Tag", accessor: (r) => r.tag },
+          { key: "tag", header: "Tag / Number / Name", accessor: (r) => r.tag },
           { key: "species", header: "Species", accessor: (r) => r.species },
-          { key: "breed", header: "Breed", accessor: (r) => r.breed?.name },
+          { key: "breed", header: "Breed", accessor: (r) => breedLabel(r) },
           { key: "status", header: "Status", accessor: (r) => r.breedingStatus },
         ]}
         data={query.data?.items ?? []}
@@ -150,6 +167,7 @@ export default function AnimalsScreen() {
                 onChange={(v) => {
                   field.onChange(v);
                   form.setValue("breedId", "");
+                  form.setValue("breedOther", "");
                 }}
                 disabled={editing !== null}
                 error={form.formState.errors.species?.message}
@@ -161,8 +179,9 @@ export default function AnimalsScreen() {
             name="tag"
             render={({ field }) => (
               <Input
-                label="Tag / ear number"
-                autoCapitalize="characters"
+                label="Tag / Number / Name"
+                placeholder="Ear tag, register number, or the animal's name"
+                autoCapitalize="words"
                 value={field.value}
                 onChangeText={field.onChange}
                 error={form.formState.errors.tag?.message}
@@ -182,6 +201,22 @@ export default function AnimalsScreen() {
               />
             )}
           />
+          {breedChoice === OTHER_BREED_VALUE ? (
+            <Controller
+              control={form.control}
+              name="breedOther"
+              render={({ field }) => (
+                <Input
+                  label="Breed name"
+                  placeholder="Type the breed as you know it"
+                  autoCapitalize="words"
+                  value={field.value ?? ""}
+                  onChangeText={field.onChange}
+                  error={form.formState.errors.breedOther?.message}
+                />
+              )}
+            />
+          ) : null}
           <Controller
             control={form.control}
             name="ageMonths"

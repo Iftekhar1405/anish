@@ -10,6 +10,7 @@ import {
   View,
   useWindowDimensions,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Button } from "./Button";
 import { cn } from "./utils/cn";
 
@@ -42,8 +43,12 @@ export function Dialog({
   const progress = useRef(new Animated.Value(0)).current;
   const isWeb = Platform.OS === "web";
   const { height } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   // Keeps a long form (and the footer buttons) on screen instead of overflowing off the bottom.
   const bodyMaxHeight = Math.round(height * 0.55);
+  // Android draws edge-to-edge: without this the Cancel/Confirm row sits behind
+  // the system navigation buttons and can't be tapped.
+  const footerInset = isWeb ? 0 : insets.bottom;
 
   useEffect(() => {
     Animated.timing(progress, {
@@ -81,9 +86,10 @@ export function Dialog({
           >
             <Pressable
               onPress={(event) => event.stopPropagation()}
+              style={{ paddingBottom: (isWeb ? 24 : 32) + footerInset }}
               className={cn(
                 "w-full bg-white px-6 pt-6 shadow-lg",
-                isWeb ? "rounded-lg pb-6" : "rounded-t-xl pb-8",
+                isWeb ? "rounded-lg" : "rounded-t-xl",
               )}
             >
               <Text className="text-lg font-semibold text-neutral-900">{title}</Text>

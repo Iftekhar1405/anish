@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { ScrollView, Text, View } from "react-native";
+import { Text, View } from "react-native";
 import { useLocalSearchParams } from "expo-router";
-import { ApiError } from "@ai-platform/api-client";
-import { Button, Card, EmptyState, Input, Spinner, useToast } from "@ai-platform/ui";
+import { errorMessage } from "@ai-platform/api-client";
+import { Button, Card, EmptyState, formatDdMmYyyy, Input, KeyboardScreen, Spinner, useToast } from "@ai-platform/ui";
 import type { BookingStatus } from "@ai-platform/types";
 import {
   useAssignment,
@@ -17,14 +17,6 @@ const STATUS_STYLE: Record<BookingStatus, { bg: string; text: string; label: str
   COMPLETED: { bg: "bg-primary-50", text: "text-primary-700", label: "Completed" },
   CANCELLED: { bg: "bg-neutral-100", text: "text-neutral-500", label: "Cancelled" },
 };
-
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
-}
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
@@ -64,7 +56,7 @@ export default function AssignmentDetailScreen() {
       toast.show("Service started", "success");
     } catch (err) {
       toast.show(
-        err instanceof ApiError ? err.message : "Couldn't start — check your connection and try again.",
+        errorMessage(err, "Couldn't start — check your connection and try again."),
         "error",
       );
     }
@@ -76,18 +68,14 @@ export default function AssignmentDetailScreen() {
       toast.show("Service completed", "success");
     } catch (err) {
       toast.show(
-        err instanceof ApiError ? err.message : "Couldn't complete — check your connection and try again.",
+        errorMessage(err, "Couldn't complete — check your connection and try again."),
         "error",
       );
     }
   }
 
   return (
-    <ScrollView
-      className="flex-1 bg-neutral-50"
-      contentContainerClassName="gap-3 p-4"
-      keyboardShouldPersistTaps="handled"
-    >
+    <KeyboardScreen className="bg-neutral-50" contentContainerClassName="gap-3 p-4">
       <Card className="gap-3">
         <View className="flex-row items-center justify-between">
           <Text className="text-lg font-semibold text-neutral-900">
@@ -99,16 +87,18 @@ export default function AssignmentDetailScreen() {
         </View>
         <Row label="Phone" value={booking.farmer?.phone ?? "—"} />
         <Row
-          label="Address"
+          label="Visit location"
           value={
-            [booking.farmer?.address, booking.farmer?.district?.name]
+            booking.location ??
+            ([booking.farmer?.address, booking.farmer?.district?.name]
               .filter(Boolean)
-              .join(", ") || "Not on file"
+              .join(", ") ||
+              "Not on file")
           }
         />
         <Row label="Animal" value={`${booking.animal?.tag ?? "—"} (${booking.animal?.species ?? "—"})`} />
         <Row label="Bull / Buck" value={booking.batch?.sire?.name ?? "—"} />
-        <Row label="Preferred date" value={formatDate(booking.preferredDate)} />
+        <Row label="Preferred date" value={formatDdMmYyyy(booking.preferredDate)} />
         {booking.notes ? <Row label="Farmer notes" value={booking.notes} /> : null}
       </Card>
 
@@ -141,6 +131,6 @@ export default function AssignmentDetailScreen() {
           </Text>
         </Card>
       ) : null}
-    </ScrollView>
+    </KeyboardScreen>
   );
 }

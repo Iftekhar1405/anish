@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { View } from "react-native";
-import { ApiError } from "@ai-platform/api-client";
-import { Button, Dialog, Select, Table, useToast } from "@ai-platform/ui";
+import { Text, View } from "react-native";
+import { errorMessage } from "@ai-platform/api-client";
+import { Button, Dialog, formatDdMmYyyy, Select, Table, useToast } from "@ai-platform/ui";
 import { BOOKING_STATUSES, type Booking, type BookingStatus } from "@ai-platform/types";
 import { useAssignBooking, useBookings } from "../../src/features/bookings/hooks";
 import { useTechnicians } from "../../src/features/users/hooks";
@@ -12,8 +12,16 @@ const statusOptions = [
   ...BOOKING_STATUSES.map((s) => ({ label: s, value: s })),
 ];
 
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString();
+/**
+ * Where the technician has to go: the location captured on the booking itself,
+ * falling back to the farmer's profile address for bookings made before
+ * per-booking locations existed.
+ */
+function locationOf(booking: Booking): string {
+  const profileAddress = [booking.farmer?.address, booking.farmer?.district?.name]
+    .filter(Boolean)
+    .join(", ");
+  return booking.location ?? (profileAddress || "Not on file");
 }
 
 export default function BookingsScreen() {
@@ -51,10 +59,7 @@ export default function BookingsScreen() {
       toast.show("Booking assigned", "success");
       setAssigning(null);
     } catch (err) {
-      toast.show(
-        err instanceof ApiError ? err.message : "Could not assign booking",
-        "error",
-      );
+      toast.show(errorMessage(err, "Could not assign booking"), "error");
     }
   }
 
@@ -73,9 +78,15 @@ export default function BookingsScreen() {
       <Table<Booking>
         columns={[
           { key: "farmer", header: "Farmer", accessor: (r) => r.farmer?.name },
+          { key: "phone", header: "Phone", hideOnMobile: true, accessor: (r) => r.farmer?.phone },
+          { key: "location", header: "Location", accessor: locationOf },
           { key: "animal", header: "Animal", accessor: (r) => r.animal?.tag },
           { key: "sire", header: "Bull/Buck", accessor: (r) => r.batch?.sire?.name },
-          { key: "date", header: "Preferred date", accessor: (r) => formatDate(r.preferredDate) },
+          {
+            key: "date",
+            header: "Preferred date",
+            accessor: (r) => formatDdMmYyyy(r.preferredDate),
+          },
           { key: "status", header: "Status", accessor: (r) => r.status },
           {
             key: "technician",
@@ -106,25 +117,39 @@ export default function BookingsScreen() {
       <Dialog
         visible={assigning !== null}
         title="Assign technician"
-        description={
-          assigning
-            ? `${assigning.animal?.tag ?? "Animal"} · ${assigning.farmer?.name ?? ""}${
-                assigning.farmer?.district ? ` (${assigning.farmer.district.name})` : ""
-              }`
-            : undefined
-        }
         confirmLabel="Assign"
         loading={assign.isPending}
         onConfirm={onAssign}
         onCancel={() => setAssigning(null)}
       >
-        <Select
-          label="Technician"
-          placeholder={technicianQuery.isLoading ? "Loading technicians…" : "Select a technician"}
-          value={technicianId || null}
-          options={technicianOptions}
-          onChange={setTechnicianId}
-        />
+        <View className="gap-3">
+          {assigning ? (
+            <View className="gap-1 rounded-md bg-neutral-50 p-3">
+              <Text className="text-sm font-medium text-neutral-900">
+                {assigning.animal?.tag ?? "Animal"} · {assigning.farmer?.name ?? ""}
+              </Text>
+              <Text className="text-sm text-neutral-500">{locationOf(assigning)}</Text>
+              <Text className="text-sm text-neutral-500">
+                Preferred: {formatDdMmYyyy(assigning.preferredDate)}
+              </Text>
+            </View>
+          ) : null}
+          <Select
+            label="Technician"
+            placeholder={
+              technicianQuery.isLoading ? "Loading technicians…" : "Select a technician"
+            }
+            value={technicianId || null}
+            options={technicianOptions}
+            onChange={setTechnicianId}
+          />
+          {!technicianQuery.isLoading && technicianOptions.length === 0 ? (
+            <Text className="text-sm text-neutral-500">
+              No technician covers this farmer&apos;s district yet — set a service area on a
+              technician first.
+            </Text>
+          ) : null}
+        </View>
       </Dialog>
     </View>
   );

@@ -7,7 +7,7 @@ import {
   type ReactNode,
 } from "react";
 import type { AuthUser, LoginInput, RegisterInput } from "@ai-platform/types";
-import { authApi } from "../lib/api";
+import { authApi, setSessionExpiredHandler } from "../lib/api";
 import { getStoredUser, saveSession, tokenStorage } from "../lib/storage";
 
 type Status = "loading" | "authed" | "guest";
@@ -44,6 +44,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => {
       active = false;
     };
+  }, []);
+
+  // A request that comes back 401 *and* can't be refreshed means the session is
+  // over: drop it here so the app routes back to login, instead of leaving the
+  // user on a screen full of auth errors.
+  useEffect(() => {
+    setSessionExpiredHandler(() => {
+      void tokenStorage.clear();
+      setUser(null);
+      setStatus("guest");
+    });
+    return () => setSessionExpiredHandler(null);
   }, []);
 
   const value = useMemo<AuthContextValue>(

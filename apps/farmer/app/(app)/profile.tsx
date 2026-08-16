@@ -1,9 +1,17 @@
-import { ScrollView, Text, View } from "react-native";
+import { Text, View } from "react-native";
 import { useRouter, type Href } from "expo-router";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
 import { ApiError } from "@ai-platform/api-client";
-import { Button, Card, Input, Select, Spinner, useToast } from "@ai-platform/ui";
+import {
+  Button,
+  Card,
+  Input,
+  KeyboardScreen,
+  Select,
+  Spinner,
+  useToast,
+} from "@ai-platform/ui";
 import {
   updateProfileFormSchema,
   type UpdateProfileFormInput,
@@ -52,11 +60,7 @@ export default function ProfileScreen() {
   });
 
   return (
-    <ScrollView
-      className="flex-1 bg-neutral-50"
-      contentContainerClassName="gap-4 p-4"
-      keyboardShouldPersistTaps="handled"
-    >
+    <KeyboardScreen className="bg-neutral-50" contentContainerClassName="gap-4 p-4">
       <Card className="gap-1">
         <Text className="text-lg font-semibold text-neutral-900">{user?.name}</Text>
         <Text className="text-sm text-neutral-500">{user?.phone}</Text>
@@ -122,6 +126,6 @@ export default function ProfileScreen() {
       >
         Log out
       </Button>
-    </ScrollView>
+    </KeyboardScreen>
   );
 }

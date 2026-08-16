@@ -20,11 +20,14 @@ export interface ListMyAnimalsQuery {
 export interface MyAnimalCreate {
   species: Species;
   breedId?: string;
+  /** Free-text breed, when the farmer's breed isn't in the master list. */
+  breedOther?: string;
   tag: string;
   ageMonths?: number;
 }
 export interface MyAnimalUpdate {
   breedId?: string;
+  breedOther?: string;
   tag?: string;
   ageMonths?: number;
 }

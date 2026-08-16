@@ -1,9 +1,16 @@
 import { useState } from "react";
-import { ScrollView } from "react-native";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
 import { ApiError } from "@ai-platform/api-client";
-import { Button, Card, Input, Select, Table, useToast } from "@ai-platform/ui";
+import {
+  Button,
+  Card,
+  Input,
+  KeyboardScreen,
+  Select,
+  Table,
+  useToast,
+} from "@ai-platform/ui";
 import {
   broadcastFormSchema,
   type AppNotification,
@@ -55,11 +62,7 @@ export default function NotificationsScreen() {
   return (
     // Compose form + history are one continuous page; the Table opts out of its own
     // scrolling so the two don't fight over vertical gestures.
-    <ScrollView
-      className="flex-1 bg-neutral-50"
-      contentContainerClassName="gap-3 p-4"
-      keyboardShouldPersistTaps="handled"
-    >
+    <KeyboardScreen className="bg-neutral-50" contentContainerClassName="gap-3 p-4">
       <Card className="gap-3">
         <Controller
           control={form.control}
@@ -132,6 +135,6 @@ export default function NotificationsScreen() {
         onPageChange={setPage}
         scrollable={false}
       />
-    </ScrollView>
+    </KeyboardScreen>
   );
 }

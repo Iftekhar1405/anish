@@ -32,6 +32,8 @@ export interface Booking {
   technician?: { id: string; name: string; phone: string } | null;
   status: BookingStatus;
   preferredDate: string;
+  /** Where this visit happens — per booking, defaulting to the farmer's address. */
+  location: string | null;
   notes: string | null;
   assignedAt: string | null;
   startedAt: string | null;
@@ -67,9 +69,18 @@ export type CompleteBookingFormInput = z.input<typeof completeBookingFormSchema>
 export type CompleteBookingFormValues = z.output<typeof completeBookingFormSchema>;
 
 export const createBookingFormSchema = z.object({
-  animalId: z.string().min(1, "Animal is required"),
+  // A farmer usually presents several animals on the same visit, so one trip
+  // through the wizard can cover many — one booking is created per animal.
+  animalIds: z.array(z.string().min(1)).min(1, "Select at least one animal"),
   batchId: z.string().min(1, "Straw batch is required"),
   preferredDate: z.string().min(1, "Preferred date is required"),
+  location: z
+    .string()
+    .trim()
+    .max(300)
+    .optional()
+    .or(z.literal(""))
+    .transform((v) => (v ? v : undefined)),
   notes: z
     .string()
     .trim()

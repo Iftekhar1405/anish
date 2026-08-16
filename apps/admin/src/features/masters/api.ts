@@ -107,6 +107,8 @@ export interface AnimalCreate {
   farmerId: string;
   species: Species;
   breedId?: string;
+  /** Free-text breed, when the farmer's breed isn't in the master list. */
+  breedOther?: string;
   tag: string;
   ageMonths?: number;
   breedingStatus?: Animal["breedingStatus"];
@@ -114,6 +116,7 @@ export interface AnimalCreate {
 export interface AnimalUpdate {
   species?: Species;
   breedId?: string;
+  breedOther?: string;
   tag?: string;
   ageMonths?: number;
   breedingStatus?: Animal["breedingStatus"];

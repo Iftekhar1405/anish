@@ -13,6 +13,9 @@ function toQuery(params: ListUsersQuery): string {
   if (params.pageSize) sp.set("pageSize", String(params.pageSize));
   if (params.search) sp.set("search", params.search);
   if (params.isActive !== undefined) sp.set("isActive", String(params.isActive));
+  // Powers the assign picker: technicians whose service area is in the
+  // farmer's district. Without this the filter silently did nothing.
+  if (params.districtId) sp.set("districtId", params.districtId);
   const qs = sp.toString();
   return qs ? `?${qs}` : "";
 }

@@ -82,7 +82,7 @@ export class AnimalsService {
     await this.assertFarmer(farmerId);
     try {
       return await this.prisma.animal.create({
-        data: { ...dto, farmerId },
+        data: { ...this.normalizeBreed(dto), farmerId },
         include: animalInclude,
       });
     } catch (err) {
@@ -98,7 +98,11 @@ export class AnimalsService {
     const current = await this.getOrThrow(id);
     this.assertOwnership(current, currentUser);
     // Farmers manage their own animal's details but not the admin soft-delete flag.
-    const data = currentUser.role === Role.FARMER ? { ...dto, isActive: undefined } : dto;
+    const normalized = this.normalizeBreed(dto);
+    const data =
+      currentUser.role === Role.FARMER
+        ? { ...normalized, isActive: undefined }
+        : normalized;
     try {
       return await this.prisma.animal.update({
         where: { id },
@@ -108,6 +112,29 @@ export class AnimalsService {
     } catch (err) {
       throw this.mapError(err);
     }
+  }
+
+  /**
+   * `breedId` (master list) and `breedOther` (free text, for farmers who don't
+   * know the registered breed) are mutually exclusive — whichever one the
+   * caller supplied wins and the other is cleared, so a row can never carry a
+   * stale leftover from the previous choice. A payload that mentions neither is
+   * left untouched, so a partial update of e.g. just the tag keeps the breed.
+   */
+  private normalizeBreed<T extends { breedId?: string; breedOther?: string }>(
+    dto: T,
+  ): T & { breedId?: string | null; breedOther?: string | null } {
+    // Checked by value, not `in`: class-transformer defines every declared
+    // optional property on the instance, so `'breedId' in dto` is true even for
+    // a payload that never mentioned it — which would silently wipe the breed
+    // on an unrelated partial update.
+    const mentionsBreed = dto.breedId !== undefined || dto.breedOther !== undefined;
+    if (!mentionsBreed) return dto;
+    const breedId = dto.breedId?.trim() || null;
+    const breedOther = dto.breedOther?.trim() || null;
+    return breedId
+      ? { ...dto, breedId, breedOther: null }
+      : { ...dto, breedId: null, breedOther };
   }
 
   private resolveFarmerId(

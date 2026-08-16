@@ -62,6 +62,27 @@ export interface CreateTechnicianInput {
 export const updateUserFormSchema = z.object({ name: nameSchema });
 export type UpdateUserFormValues = z.infer<typeof updateUserFormSchema>;
 
+/**
+ * Admin-side farmer edit. Carries the farmer's location, which is what the
+ * admin needs when assigning a technician and what the technician travels to.
+ */
+export const updateFarmerFormSchema = z.object({
+  name: nameSchema,
+  address: z
+    .string()
+    .trim()
+    .max(200)
+    .optional()
+    .or(z.literal(""))
+    .transform((v) => (v ? v : undefined)),
+  districtId: z
+    .string()
+    .optional()
+    .transform((v) => (v ? v : undefined)),
+});
+export type UpdateFarmerFormInput = z.input<typeof updateFarmerFormSchema>;
+export type UpdateFarmerFormValues = z.output<typeof updateFarmerFormSchema>;
+
 export const updateTechnicianFormSchema = z.object({
   name: nameSchema,
   serviceAreaId: z

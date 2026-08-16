@@ -1,16 +1,10 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState, type ReactNode } from "react";
+import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
-import {
-  ActivityIndicator,
-  Pressable,
-  ScrollView,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { Pressable, Text, View } from "react-native";
 import { useRouter, type Href } from "expo-router";
-import { ApiError } from "@ai-platform/api-client";
+import { errorMessage } from "@ai-platform/api-client";
+import { Button, Input, KeyboardScreen } from "@ai-platform/ui";
 import { registerFormSchema, type RegisterFormValues } from "@ai-platform/types";
 import { useAuth } from "../../src/auth/AuthProvider";
 
@@ -32,19 +26,16 @@ export default function RegisterScreen() {
     try {
       await register(values);
     } catch (err) {
-      setSubmitError(
-        err instanceof ApiError
-          ? err.message
-          : "Something went wrong. Please try again.",
-      );
+      setSubmitError(errorMessage(err));
     }
   });
 
   return (
-    <ScrollView
-      className="flex-1 bg-white"
-      contentContainerClassName="grow justify-center gap-4 p-6"
-      keyboardShouldPersistTaps="handled"
+    <KeyboardScreen
+      className="bg-white"
+      contentContainerClassName="gap-4 p-6"
+      center
+      safeAreaBottom
     >
       <View className="gap-1">
         <Text className="text-3xl font-bold text-neutral-900">Create account</Text>
@@ -57,15 +48,15 @@ export default function RegisterScreen() {
         control={control}
         name="name"
         render={({ field: { value, onChange, onBlur } }) => (
-          <Field label="Full name" error={errors.name?.message}>
-            <TextInput
-              className="rounded-md border border-neutral-300 px-4 py-3 text-base text-neutral-900"
-              placeholder="Ramesh Kumar"
-              value={value}
-              onChangeText={onChange}
-              onBlur={onBlur}
-            />
-          </Field>
+          <Input
+            label="Full name"
+            placeholder="Ramesh Kumar"
+            autoCapitalize="words"
+            value={value}
+            onChangeText={onChange}
+            onBlur={onBlur}
+            error={errors.name?.message}
+          />
         )}
       />
 
@@ -73,17 +64,17 @@ export default function RegisterScreen() {
         control={control}
         name="phone"
         render={({ field: { value, onChange, onBlur } }) => (
-          <Field label="Phone" error={errors.phone?.message}>
-            <TextInput
-              className="rounded-md border border-neutral-300 px-4 py-3 text-base text-neutral-900"
-              placeholder="+919876543210"
-              keyboardType="phone-pad"
-              autoCapitalize="none"
-              value={value}
-              onChangeText={onChange}
-              onBlur={onBlur}
-            />
-          </Field>
+          <Input
+            label="Phone"
+            placeholder="+919876543210"
+            keyboardType="phone-pad"
+            autoCapitalize="none"
+            autoComplete="tel"
+            value={value}
+            onChangeText={onChange}
+            onBlur={onBlur}
+            error={errors.phone?.message}
+          />
         )}
       />
 
@@ -91,62 +82,33 @@ export default function RegisterScreen() {
         control={control}
         name="password"
         render={({ field: { value, onChange, onBlur } }) => (
-          <Field label="Password" error={errors.password?.message}>
-            <TextInput
-              className="rounded-md border border-neutral-300 px-4 py-3 text-base text-neutral-900"
-              placeholder="At least 8 characters"
-              secureTextEntry
-              value={value}
-              onChangeText={onChange}
-              onBlur={onBlur}
-            />
-          </Field>
+          <Input
+            label="Password"
+            placeholder="At least 8 characters"
+            secureTextEntry
+            autoComplete="new-password"
+            value={value}
+            onChangeText={onChange}
+            onBlur={onBlur}
+            error={errors.password?.message}
+          />
         )}
       />
 
-      {submitError ? (
-        <Text className="text-sm text-error">{submitError}</Text>
-      ) : null}
+      {submitError ? <Text className="text-sm text-error">{submitError}</Text> : null}
+
+      <Button className="mt-2" loading={isSubmitting} onPress={onSubmit}>
+        Create account
+      </Button>
 
       <Pressable
-        className={`mt-2 items-center rounded-md bg-primary-600 py-3 ${
-          isSubmitting ? "opacity-50" : ""
-        }`}
-        disabled={isSubmitting}
-        onPress={onSubmit}
+        className="min-h-11 justify-center"
+        onPress={() => router.push("/login" as string as Href)}
       >
-        {isSubmitting ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text className="text-base font-semibold text-white">
-            Create account
-          </Text>
-        )}
-      </Pressable>
-
-      <Pressable onPress={() => router.push("/login" as string as Href)}>
         <Text className="text-center text-sm text-primary-700">
           Already have an account? Sign in
         </Text>
       </Pressable>
-    </ScrollView>
-  );
-}
-
-function Field({
-  label,
-  error,
-  children,
-}: {
-  label: string;
-  error?: string;
-  children: ReactNode;
-}) {
-  return (
-    <View className="gap-1">
-      <Text className="text-sm font-medium text-neutral-700">{label}</Text>
-      {children}
-      {error ? <Text className="text-sm text-error">{error}</Text> : null}
-    </View>
+    </KeyboardScreen>
   );
 }

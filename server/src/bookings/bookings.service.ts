@@ -105,12 +105,23 @@ export class BookingsService {
       );
     }
 
+    // Fall back to the farmer's profile address so the technician always has
+    // somewhere to go, even when the farmer didn't type a per-visit location.
+    const location =
+      dto.location?.trim() ||
+      (await this.prisma.user.findUnique({
+        where: { id: farmerId },
+        select: { address: true },
+      }))?.address ||
+      null;
+
     return this.prisma.booking.create({
       data: {
         animalId: dto.animalId,
         farmerId,
         batchId: dto.batchId,
         preferredDate,
+        location,
         notes: dto.notes,
       },
       include: bookingInclude,
@@ -254,11 +265,21 @@ export class BookingsService {
     throw new ForbiddenException('Insufficient role');
   }
 
+  /**
+   * A booking's preferred date is a *calendar day*, not an instant. Date-only
+   * values are pinned to UTC midnight so the day a farmer picked is the day
+   * every client reads back, and "in the past" is judged against the start of
+   * today rather than the current time of day.
+   */
   private parsePreferredDate(value: string): Date {
-    const date = new Date(value);
-    const startOfToday = new Date();
-    startOfToday.setHours(0, 0, 0, 0);
-    if (date < startOfToday) {
+    const isDateOnly = /^\d{4}-\d{2}-\d{2}$/.test(value);
+    const date = new Date(isDateOnly ? `${value}T00:00:00.000Z` : value);
+    if (Number.isNaN(date.getTime())) {
+      throw new BadRequestException('Preferred date is not a valid date');
+    }
+    const now = new Date();
+    const startOfToday = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+    if (date.getTime() < startOfToday) {
       throw new BadRequestException('Preferred date cannot be in the past');
     }
     return date;

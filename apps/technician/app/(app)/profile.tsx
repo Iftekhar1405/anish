@@ -1,6 +1,6 @@
-import { ScrollView, Text } from "react-native";
+import { Text } from "react-native";
 import { useRouter, type Href } from "expo-router";
-import { Button, Card } from "@ai-platform/ui";
+import { Button, Card, KeyboardScreen } from "@ai-platform/ui";
 import { useAuth } from "../../src/auth/AuthProvider";
 
 export default function ProfileScreen() {
@@ -8,7 +8,7 @@ export default function ProfileScreen() {
   const router = useRouter();
 
   return (
-    <ScrollView className="flex-1 bg-neutral-50" contentContainerClassName="gap-4 p-4">
+    <KeyboardScreen className="bg-neutral-50" contentContainerClassName="gap-4 p-4">
       <Card className="gap-1">
         <Text className="text-lg font-semibold text-neutral-900">{user?.name}</Text>
         <Text className="text-sm text-neutral-500">{user?.phone}</Text>
@@ -27,6 +27,6 @@ export default function ProfileScreen() {
       >
         Log out
       </Button>
-    </ScrollView>
+    </KeyboardScreen>
   );
 }

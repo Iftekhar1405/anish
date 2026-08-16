@@ -1,17 +1,9 @@
 import { FlatList, Text, View } from "react-native";
 import { useLocalSearchParams } from "expo-router";
 import { Milk } from "lucide-react-native";
-import { Card, EmptyState, Spinner } from "@ai-platform/ui";
-import type { BreedingHistoryEntry } from "@ai-platform/types";
+import { Card, EmptyState, formatDdMmYyyy, Spinner } from "@ai-platform/ui";
+import { breedLabel, type BreedingHistoryEntry } from "@ai-platform/types";
 import { useAnimal, useBreedingHistory } from "../../../src/features/animals/hooks";
-
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
-}
 
 export default function AnimalHistoryScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -40,7 +32,7 @@ export default function AnimalHistoryScreen() {
       <Card className="gap-1">
         <Text className="text-lg font-semibold text-neutral-900">{animal.tag}</Text>
         <Text className="text-sm text-neutral-500">
-          {animal.species} · {animal.breed?.name ?? "Unknown breed"} · {animal.breedingStatus}
+          {animal.species} · {breedLabel(animal)} · {animal.breedingStatus}
         </Text>
       </Card>
 
@@ -69,7 +61,7 @@ function HistoryRow({ entry }: { entry: BreedingHistoryEntry }) {
         <Text className="text-sm font-semibold text-neutral-900">
           {entry.booking?.batch?.sire?.name ?? "Bull/Buck"}
         </Text>
-        <Text className="text-xs text-neutral-400">{formatDate(entry.inseminationDate)}</Text>
+        <Text className="text-xs text-neutral-400">{formatDdMmYyyy(entry.inseminationDate)}</Text>
       </View>
       {entry.notes ? <Text className="text-sm text-neutral-500">{entry.notes}</Text> : null}
     </Card>

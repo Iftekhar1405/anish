@@ -234,6 +234,9 @@ model Animal {
   species        Species
   breedId        String?
   breed          Breed?               @relation(fields: [breedId], references: [id], onDelete: SetNull)
+  // Free-text breed, for farmers who don't know the exact registered breed or
+  // whose breed isn't in the master list. Mutually exclusive with breedId.
+  breedOther     String?
   tag            String
   ageMonths      Int?
   breedingStatus AnimalBreedingStatus @default(OPEN)
@@ -261,6 +264,10 @@ model Booking {
   technician    User?         @relation("BookingTechnician", fields: [technicianId], references: [id], onDelete: SetNull)
   status        BookingStatus @default(PENDING)
   preferredDate DateTime
+  // Where this particular visit should happen. Defaults to the farmer's
+  // profile address in the app, but can differ per booking (another shed,
+  // a relative's farm, …) — this is what the technician actually travels to.
+  location      String?
   notes         String?
   assignedAt    DateTime?
   startedAt     DateTime?

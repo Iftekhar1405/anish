@@ -105,6 +105,8 @@ export interface Animal {
   species: Species;
   breedId: string | null;
   breed?: { id: string; name: string; species: Species } | null;
+  /** Free-text breed, used when the breed isn't in the master list. */
+  breedOther: string | null;
   tag: string;
   ageMonths: number | null;
   breedingStatus: AnimalBreedingStatus;
@@ -269,24 +271,91 @@ export type BatchFormInput = z.input<typeof batchFormSchema>;
 export type BatchFormValues = z.output<typeof batchFormSchema>;
 
 // Animal
-export const animalFormSchema = z.object({
-  farmerId: z.string().min(1, "Farmer is required"),
-  species: speciesSchema,
-  breedId: z.string().optional().transform((v) => (v ? v : undefined)),
-  tag: z.string().trim().min(1, "Tag is required").max(60),
-  ageMonths: optionalIntText("Age (months)", 600),
-  breedingStatus: breedingStatusSchema,
-});
+//
+// Breed is either picked from the master list (`breedId`) or typed by hand.
+// Farmers routinely don't know the registered breed, so the Select carries an
+// extra "Other" entry with this sentinel value; picking it reveals a free-text
+// field and the schema swaps the two over on output.
+export const OTHER_BREED_VALUE = "__other__";
+
+const breedChoiceFields = {
+  breedId: z.string().optional(),
+  breedOther: z.string().trim().max(60).optional(),
+};
+
+function refineBreedChoice(
+  value: { breedId?: string; breedOther?: string },
+  ctx: z.RefinementCtx,
+): void {
+  if (value.breedId === OTHER_BREED_VALUE && !value.breedOther?.trim()) {
+    ctx.addIssue({
+      code: "custom",
+      message: "Type the breed name",
+      path: ["breedOther"],
+    });
+  }
+}
+
+function transformBreedChoice<T extends { breedId?: string; breedOther?: string }>(
+  value: T,
+): Omit<T, "breedId" | "breedOther"> & { breedId: string; breedOther: string } {
+  const isOther = value.breedId === OTHER_BREED_VALUE;
+  // Empty strings rather than `undefined`: an absent key tells the server to
+  // leave the breed alone, so clearing it back to "not sure" has to be sent
+  // explicitly.
+  return {
+    ...value,
+    breedId: isOther ? "" : (value.breedId ?? ""),
+    breedOther: isOther ? (value.breedOther?.trim() ?? "") : "",
+  };
+}
+
+export const animalFormSchema = z
+  .object({
+    farmerId: z.string().min(1, "Farmer is required"),
+    species: speciesSchema,
+    ...breedChoiceFields,
+    tag: z.string().trim().min(1, "Tag / number / name is required").max(60),
+    ageMonths: optionalIntText("Age (months)", 600),
+    breedingStatus: breedingStatusSchema,
+  })
+  .superRefine(refineBreedChoice)
+  .transform(transformBreedChoice);
 export type AnimalFormInput = z.input<typeof animalFormSchema>;
 export type AnimalFormValues = z.output<typeof animalFormSchema>;
 
 // Animal (farmer self-service — no farmerId/breedingStatus, those are
 // server-resolved or system-managed rather than farmer-editable).
-export const farmerAnimalFormSchema = z.object({
-  species: speciesSchema,
-  breedId: z.string().optional().transform((v) => (v ? v : undefined)),
-  tag: z.string().trim().min(1, "Tag is required").max(60),
-  ageMonths: optionalIntText("Age (months)", 600),
-});
+export const farmerAnimalFormSchema = z
+  .object({
+    species: speciesSchema,
+    ...breedChoiceFields,
+    tag: z.string().trim().min(1, "Tag / number / name is required").max(60),
+    ageMonths: optionalIntText("Age (months)", 600),
+  })
+  .superRefine(refineBreedChoice)
+  .transform(transformBreedChoice);
 export type FarmerAnimalFormInput = z.input<typeof farmerAnimalFormSchema>;
 export type FarmerAnimalFormValues = z.output<typeof farmerAnimalFormSchema>;
+
+/**
+ * Turns an animal's stored breed into the Select value + free-text pair the
+ * forms above expect, so opening "Edit" round-trips a hand-typed breed.
+ */
+export function toBreedChoice(animal: {
+  breedId: string | null;
+  breedOther: string | null;
+}): { breedId: string; breedOther: string } {
+  if (animal.breedOther) {
+    return { breedId: OTHER_BREED_VALUE, breedOther: animal.breedOther };
+  }
+  return { breedId: animal.breedId ?? "", breedOther: "" };
+}
+
+/** What to show in a list/detail view for an animal's breed. */
+export function breedLabel(animal: {
+  breed?: { name: string } | null;
+  breedOther: string | null;
+}): string {
+  return animal.breed?.name ?? animal.breedOther ?? "—";
+}

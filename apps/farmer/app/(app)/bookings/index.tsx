@@ -1,7 +1,7 @@
 import { FlatList, Pressable, Text, View } from "react-native";
 import { useRouter, type Href } from "expo-router";
 import { CalendarClock, Plus } from "lucide-react-native";
-import { Button, Card, EmptyState, Skeleton } from "@ai-platform/ui";
+import { Button, Card, EmptyState, formatDdMmYyyy, Skeleton } from "@ai-platform/ui";
 import type { Booking, BookingStatus } from "@ai-platform/types";
 import { useMyBookings } from "../../../src/features/bookings/hooks";
 
@@ -12,14 +12,6 @@ const STATUS_STYLE: Record<BookingStatus, { bg: string; text: string; label: str
   COMPLETED: { bg: "bg-primary-50", text: "text-primary-700", label: "Completed" },
   CANCELLED: { bg: "bg-neutral-100", text: "text-neutral-500", label: "Cancelled" },
 };
-
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
-}
 
 export default function BookingsScreen() {
   const router = useRouter();
@@ -81,7 +73,7 @@ function BookingCard({ booking }: { booking: Booking }) {
           </View>
         </View>
         <Text className="text-sm text-neutral-500">
-          {booking.batch?.sire?.name ?? "Straw"} · Preferred {formatDate(booking.preferredDate)}
+          {booking.batch?.sire?.name ?? "Straw"} · Preferred {formatDdMmYyyy(booking.preferredDate)}
         </Text>
         {booking.technician ? (
           <Text className="text-sm text-neutral-500">Technician: {booking.technician.name}</Text>

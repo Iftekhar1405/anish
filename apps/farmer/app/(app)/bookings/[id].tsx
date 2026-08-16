@@ -1,6 +1,6 @@
 import { ScrollView, Text, View } from "react-native";
 import { useLocalSearchParams } from "expo-router";
-import { Card, EmptyState, Spinner } from "@ai-platform/ui";
+import { Card, EmptyState, formatDdMmYyyy, Spinner } from "@ai-platform/ui";
 import type { BookingStatus } from "@ai-platform/types";
 import { useBooking } from "../../../src/features/bookings/hooks";
 
@@ -11,14 +11,6 @@ const STATUS_STYLE: Record<BookingStatus, { bg: string; text: string; label: str
   COMPLETED: { bg: "bg-primary-50", text: "text-primary-700", label: "Completed" },
   CANCELLED: { bg: "bg-neutral-100", text: "text-neutral-500", label: "Cancelled" },
 };
-
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
-}
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
@@ -61,7 +53,8 @@ export default function BookingDetailScreen() {
         </View>
         <Row label="Bull / Buck" value={booking.batch?.sire?.name ?? "—"} />
         <Row label="Species" value={booking.animal?.species ?? "—"} />
-        <Row label="Preferred date" value={formatDate(booking.preferredDate)} />
+        <Row label="Preferred date" value={formatDdMmYyyy(booking.preferredDate)} />
+        <Row label="Location" value={booking.location ?? "Your profile address"} />
         <Row label="Technician" value={booking.technician?.name ?? "Not yet assigned"} />
         {booking.notes ? <Row label="Notes" value={booking.notes} /> : null}
       </Card>

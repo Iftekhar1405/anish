@@ -23,6 +23,12 @@ export class CreateAnimalDto {
   @IsString()
   breedId?: string;
 
+  /** Free-text breed for farmers whose breed isn't in the master list. */
+  @IsOptional()
+  @IsString()
+  @MaxLength(60)
+  breedOther?: string;
+
   @IsString()
   @MinLength(1)
   @MaxLength(60)

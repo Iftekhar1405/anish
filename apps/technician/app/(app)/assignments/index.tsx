@@ -1,7 +1,7 @@
 import { FlatList, Pressable, Text, View } from "react-native";
 import { useRouter, type Href } from "expo-router";
 import { ClipboardList } from "lucide-react-native";
-import { Card, EmptyState, Skeleton } from "@ai-platform/ui";
+import { Card, EmptyState, formatDdMmYyyy, Skeleton } from "@ai-platform/ui";
 import type { Booking, BookingStatus } from "@ai-platform/types";
 import { useAssignments } from "../../../src/features/bookings/hooks";
 
@@ -12,14 +12,6 @@ const STATUS_STYLE: Record<BookingStatus, { bg: string; text: string; label: str
   COMPLETED: { bg: "bg-primary-50", text: "text-primary-700", label: "Completed" },
   CANCELLED: { bg: "bg-neutral-100", text: "text-neutral-500", label: "Cancelled" },
 };
-
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
-}
 
 export default function AssignmentsScreen() {
   const query = useAssignments({ pageSize: 50 });
@@ -76,7 +68,7 @@ function AssignmentCard({ booking }: { booking: Booking }) {
           {booking.animal?.tag ?? "Animal"} · {booking.batch?.sire?.name ?? "Straw"}
         </Text>
         <Text className="text-sm text-neutral-500">
-          Preferred {formatDate(booking.preferredDate)}
+          Preferred {formatDdMmYyyy(booking.preferredDate)}
         </Text>
       </Card>
     </Pressable>

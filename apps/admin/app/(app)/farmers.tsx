@@ -2,22 +2,26 @@ import { useState } from "react";
 import { View } from "react-native";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
+import { errorMessage } from "@ai-platform/api-client";
+import { Button, Dialog, formatDdMmYyyy, Input, Select, Table, useToast } from "@ai-platform/ui";
 import {
-  Button,
-  Dialog,
-  Input,
-  Select,
-  Table,
-  useToast,
-} from "@ai-platform/ui";
-import {
-  updateUserFormSchema,
-  type UpdateUserFormValues,
+  updateFarmerFormSchema,
+  type UpdateFarmerFormInput,
+  type UpdateFarmerFormValues,
   type UserSummary,
 } from "@ai-platform/types";
 import { useFarmers, useUpdateFarmer } from "../../src/features/users/hooks";
+import { districts } from "../../src/features/masters/hooks";
 
 const PAGE_SIZE = 10;
+
+/** The farmer's location as one line — what the technician actually travels to. */
+function locationOf(farmer: UserSummary): string {
+  return (
+    [farmer.address, farmer.district?.name].filter(Boolean).join(", ") ||
+    "Not on file"
+  );
+}
 
 export default function FarmersScreen() {
   const [search, setSearch] = useState("");
@@ -31,22 +35,35 @@ export default function FarmersScreen() {
     pageSize: PAGE_SIZE,
     search: search || undefined,
   });
+  const districtQuery = districts.useList({ pageSize: 100 });
   const updateFarmer = useUpdateFarmer();
+
+  const districtOptions = [
+    { label: "No district", value: "" },
+    ...(districtQuery.data?.items ?? []).map((d) => ({
+      label: `${d.name}, ${d.state}`,
+      value: d.id,
+    })),
+  ];
 
   const {
     control,
     handleSubmit,
     reset,
     formState: { errors },
-  } = useForm<UpdateUserFormValues>({
-    resolver: zodResolver(updateUserFormSchema),
-    defaultValues: { name: "" },
+  } = useForm<UpdateFarmerFormInput, unknown, UpdateFarmerFormValues>({
+    resolver: zodResolver(updateFarmerFormSchema),
+    defaultValues: { name: "", address: "", districtId: "" },
   });
 
   function openEdit(row: UserSummary): void {
     setEditing(row);
     setActive(row.isActive);
-    reset({ name: row.name });
+    reset({
+      name: row.name,
+      address: row.address ?? "",
+      districtId: row.districtId ?? "",
+    });
   }
 
   const onConfirm = handleSubmit(async (values) => {
@@ -54,12 +71,17 @@ export default function FarmersScreen() {
     try {
       await updateFarmer.mutateAsync({
         id: editing.id,
-        input: { name: values.name, isActive: active },
+        input: {
+          name: values.name,
+          address: values.address,
+          districtId: values.districtId,
+          isActive: active,
+        },
       });
       toast.show("Farmer updated", "success");
       setEditing(null);
-    } catch {
-      toast.show("Could not update farmer", "error");
+    } catch (err) {
+      toast.show(errorMessage(err, "Could not update farmer"), "error");
     }
   });
 
@@ -78,6 +100,7 @@ export default function FarmersScreen() {
         columns={[
           { key: "name", header: "Name", accessor: (r) => r.name },
           { key: "phone", header: "Phone", accessor: (r) => r.phone },
+          { key: "location", header: "Location", accessor: locationOf },
           {
             key: "status",
             header: "Status",
@@ -87,7 +110,7 @@ export default function FarmersScreen() {
             key: "createdAt",
             header: "Joined",
             hideOnMobile: true,
-            accessor: (r) => new Date(r.createdAt).toLocaleDateString(),
+            accessor: (r) => formatDdMmYyyy(r.createdAt),
           },
         ]}
         data={query.data?.items ?? []}
@@ -125,6 +148,36 @@ export default function FarmersScreen() {
                 value={field.value}
                 onChangeText={field.onChange}
                 error={errors.name?.message}
+              />
+            )}
+          />
+          <Controller
+            control={control}
+            name="address"
+            render={({ field }) => (
+              <Input
+                label="Address / location"
+                placeholder="Village, landmark, shed"
+                multiline
+                value={field.value ?? ""}
+                onChangeText={field.onChange}
+                error={errors.address?.message}
+              />
+            )}
+          />
+          <Controller
+            control={control}
+            name="districtId"
+            render={({ field }) => (
+              <Select
+                label="District"
+                placeholder={
+                  districtQuery.isLoading ? "Loading districts…" : "Select a district"
+                }
+                value={field.value ?? ""}
+                options={districtOptions}
+                onChange={field.onChange}
+                error={errors.districtId?.message}
               />
             )}
           />
