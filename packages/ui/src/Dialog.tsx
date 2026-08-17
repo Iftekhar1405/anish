@@ -11,6 +11,7 @@ import {
   useWindowDimensions,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { AlertCircle } from "lucide-react-native";
 import { Button } from "./Button";
 import { cn } from "./utils/cn";
 
@@ -24,6 +25,12 @@ export interface DialogProps {
   cancelLabel?: string;
   destructive?: boolean;
   loading?: boolean;
+  /**
+   * Why the last submit failed, shown in a banner just above the buttons.
+   * A toast alone isn't enough here: the reason belongs next to the control the
+   * user just pressed, and it must stay on screen instead of auto-dismissing.
+   */
+  error?: string | null;
   onConfirm: () => void;
   onCancel: () => void;
 }
@@ -37,6 +44,7 @@ export function Dialog({
   cancelLabel = "Cancel",
   destructive = false,
   loading = false,
+  error,
   onConfirm,
   onCancel,
 }: DialogProps) {
@@ -105,6 +113,15 @@ export function Dialog({
                 >
                   {children}
                 </ScrollView>
+              ) : null}
+              {error ? (
+                <View
+                  accessibilityRole="alert"
+                  className="mt-4 flex-row items-start gap-2 rounded-md border border-error bg-neutral-50 p-3"
+                >
+                  <AlertCircle size={16} color="#DC2626" style={{ marginTop: 2 }} />
+                  <Text className="flex-1 text-sm text-error">{error}</Text>
+                </View>
               ) : null}
               <View className="mt-6 flex-row justify-end gap-3">
                 <Button variant="secondary" size="sm" onPress={onCancel} disabled={loading}>

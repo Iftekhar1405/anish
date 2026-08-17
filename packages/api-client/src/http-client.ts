@@ -148,5 +148,15 @@ export function createApiClient(config: ApiClientConfig): ApiClient {
 export function errorMessage(err: unknown, fallback = "Something went wrong. Please try again."): string {
   if (err instanceof NetworkError) return err.message;
   if (err instanceof ApiError) return err.message;
-  return fallback;
+  // Anything reaching here is a client-side fault rather than a server reply.
+  // Returning only `fallback` made those undiagnosable — a form would report
+  // "Could not save species" with no hint that the request never even left the
+  // device — so append whatever the error actually said.
+  const detail =
+    err instanceof Error && err.message
+      ? err.message
+      : typeof err === "string" && err
+        ? err
+        : "";
+  return detail ? `${fallback}: ${detail}` : fallback;
 }

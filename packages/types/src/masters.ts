@@ -184,13 +184,21 @@ export interface UploadSignature {
 
 /* --------------------------------------------------- shared field schemas */
 
+// Two separate checks on purpose: a single `.min(2, "… is required")` reported
+// "Name is required" for a name that had in fact been typed (just one
+// character), which is a message that sends the user looking in the wrong place.
 const requiredText = (label: string, max = 80) =>
-  z.string().trim().min(2, `${label} is required`).max(max);
+  z
+    .string()
+    .trim()
+    .min(1, `${label} is required`)
+    .min(2, `${label} must be at least 2 characters`)
+    .max(max, `${label} must be ${max} characters or fewer`);
 const optionalText = (max = 80) =>
   z
     .string()
     .trim()
-    .max(max)
+    .max(max, `Must be ${max} characters or fewer`)
     .optional()
     .or(z.literal(""))
     .transform((v) => (v ? v : undefined));

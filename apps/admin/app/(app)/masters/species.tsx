@@ -28,6 +28,7 @@ export default function SpeciesScreen() {
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState<Species | null>(null);
   const [active, setActive] = useState(true);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const toast = useToast();
 
   const query = species.useList({
@@ -45,16 +46,25 @@ export default function SpeciesScreen() {
 
   function openCreate(): void {
     form.reset(EMPTY_FORM);
+    setSubmitError(null);
     setCreating(true);
   }
 
   function openEdit(row: Species): void {
     setEditing(row);
     setActive(row.isActive);
+    setSubmitError(null);
     form.reset({ name: row.name, code: row.code ?? "", metrics: row.metrics });
   }
 
+  function closeDialog(): void {
+    setCreating(false);
+    setEditing(null);
+    setSubmitError(null);
+  }
+
   const onSubmit = form.handleSubmit(async (values) => {
+    setSubmitError(null);
     try {
       if (editing) {
         await update.mutateAsync({ id: editing.id, input: { ...values, isActive: active } });
@@ -66,7 +76,11 @@ export default function SpeciesScreen() {
         setCreating(false);
       }
     } catch (err) {
-      toast.show(errorMessage(err, "Could not save species"), "error");
+      // Shown in the dialog *and* as a toast: the dialog stays open on failure,
+      // so the reason has to be readable without hunting for a toast.
+      const message = errorMessage(err, "Could not save species");
+      setSubmitError(message);
+      toast.show(message, "error");
     }
   });
 
@@ -126,11 +140,9 @@ export default function SpeciesScreen() {
         description="Species drive the breed list, the catalogue and every animal record."
         confirmLabel={editing ? "Save" : "Create"}
         loading={create.isPending || update.isPending}
+        error={submitError}
         onConfirm={onSubmit}
-        onCancel={() => {
-          setCreating(false);
-          setEditing(null);
-        }}
+        onCancel={closeDialog}
       >
         <View className="gap-3">
           <Controller

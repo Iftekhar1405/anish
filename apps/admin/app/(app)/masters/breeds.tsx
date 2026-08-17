@@ -21,6 +21,7 @@ export default function BreedsScreen() {
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState<Breed | null>(null);
   const [active, setActive] = useState(true);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const toast = useToast();
 
   const query = breeds.useList({
@@ -51,16 +52,25 @@ export default function BreedsScreen() {
 
   function openCreate(): void {
     form.reset(EMPTY_FORM);
+    setSubmitError(null);
     setCreating(true);
   }
 
   function openEdit(row: Breed): void {
     setEditing(row);
     setActive(row.isActive);
+    setSubmitError(null);
     form.reset({ speciesId: row.speciesId, name: row.name, code: row.code ?? "" });
   }
 
+  function closeDialog(): void {
+    setCreating(false);
+    setEditing(null);
+    setSubmitError(null);
+  }
+
   const onSubmit = form.handleSubmit(async (values) => {
+    setSubmitError(null);
     try {
       if (editing) {
         await update.mutateAsync({
@@ -79,7 +89,9 @@ export default function BreedsScreen() {
         setCreating(false);
       }
     } catch (err) {
-      toast.show(errorMessage(err, "Could not save breed"), "error");
+      const message = errorMessage(err, "Could not save breed");
+      setSubmitError(message);
+      toast.show(message, "error");
     }
   });
 
@@ -136,11 +148,9 @@ export default function BreedsScreen() {
         title={editing ? "Edit breed" : "Add breed"}
         confirmLabel={editing ? "Save" : "Create"}
         loading={create.isPending || update.isPending}
+        error={submitError}
         onConfirm={onSubmit}
-        onCancel={() => {
-          setCreating(false);
-          setEditing(null);
-        }}
+        onCancel={closeDialog}
       >
         <View className="gap-3">
           {speciesUnavailable ? (

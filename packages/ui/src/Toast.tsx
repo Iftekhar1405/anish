@@ -7,7 +7,8 @@ import {
   useState,
   type PropsWithChildren,
 } from "react";
-import { Animated, Pressable, Text, View } from "react-native";
+import { Animated, Modal, Pressable, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AlertTriangle, CheckCircle2, Info, X, XCircle, type LucideIcon } from "lucide-react-native";
 import { cn } from "./utils/cn";
 
@@ -53,6 +54,7 @@ let idCounter = 0;
 export function ToastProvider({ children }: PropsWithChildren) {
   const [toasts, setToasts] = useState<ToastItem[]>([]);
   const timers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+  const insets = useSafeAreaInsets();
 
   const dismiss = useCallback((id: string) => {
     setToasts((current) => current.filter((toast) => toast.id !== id));
@@ -61,6 +63,12 @@ export function ToastProvider({ children }: PropsWithChildren) {
       clearTimeout(timer);
       timers.current.delete(id);
     }
+  }, []);
+
+  const dismissAll = useCallback(() => {
+    for (const timer of timers.current.values()) clearTimeout(timer);
+    timers.current.clear();
+    setToasts([]);
   }, []);
 
   const show = useCallback(
@@ -77,14 +85,47 @@ export function ToastProvider({ children }: PropsWithChildren) {
   return (
     <ToastContext.Provider value={{ show }}>
       {children}
-      <View
-        pointerEvents="box-none"
-        className="absolute inset-x-0 bottom-0 items-center px-4 pb-8"
+      {/*
+        Hosted in its own `Modal` on purpose. `Dialog` — which every master-data
+        create/edit form lives in — is itself a `Modal`, i.e. a separate native
+        window drawn above the whole app. A toast rendered in the normal view
+        tree is therefore *invisible behind an open dialog*, no matter what
+        zIndex/elevation it has, which silently hid every save error the forms
+        reported. A nested Modal is the only thing that reliably draws on top.
+
+        Toasts sit at the *top* of the screen: on phones a Dialog is a bottom
+        sheet, so the bottom is exactly where the form and its buttons are.
+      */}
+      <Modal
+        visible={toasts.length > 0}
+        transparent
+        animationType="none"
+        statusBarTranslucent
+        onRequestClose={dismissAll}
       >
-        {toasts.map((toast) => (
-          <ToastCard key={toast.id} toast={toast} onDismiss={() => dismiss(toast.id)} />
-        ))}
-      </View>
+        {/*
+          Android routes all touches to the topmost modal window, so this one
+          would swallow taps on the dialog beneath it while a toast is up. Any
+          tap therefore clears the toasts immediately and the next tap lands
+          normally — the window is never in the way for more than one tap.
+        */}
+        <Pressable
+          className="flex-1"
+          onPress={dismissAll}
+          accessibilityRole="button"
+          accessibilityLabel="Dismiss notifications"
+        >
+          <View
+            pointerEvents="box-none"
+            style={{ paddingTop: insets.top + 12 }}
+            className="absolute inset-x-0 top-0 items-center px-4"
+          >
+            {toasts.map((toast) => (
+              <ToastCard key={toast.id} toast={toast} onDismiss={() => dismiss(toast.id)} />
+            ))}
+          </View>
+        </Pressable>
+      </Modal>
     </ToastContext.Provider>
   );
 }
