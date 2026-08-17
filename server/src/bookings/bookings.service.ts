@@ -23,7 +23,7 @@ import { CreateBookingDto } from './dto/create-booking.dto';
 import { ListBookingsQueryDto } from './dto/list-bookings-query.dto';
 
 const bookingInclude = {
-  animal: { select: { id: true, tag: true, species: true } },
+  animal: { select: { id: true, tag: true, species: { select: { id: true, name: true, code: true, metrics: true } } } },
   farmer: {
     select: { id: true, name: true, phone: true, address: true, district: true },
   },
@@ -32,7 +32,9 @@ const bookingInclude = {
     select: {
       id: true,
       batchNumber: true,
-      sire: { select: { id: true, name: true, species: true, strawPriceMinor: true } },
+      sire: {
+        select: { id: true, name: true, species: { select: { id: true, name: true, code: true, metrics: true } }, strawPriceMinor: true },
+      },
     },
   },
 } satisfies Prisma.BookingInclude;
@@ -99,7 +101,7 @@ export class BookingsService {
     if (batch.quantityAvailable <= 0) {
       throw new BadRequestException('No straws available in this batch');
     }
-    if (batch.sire.species !== animal.species) {
+    if (batch.sire.speciesId !== animal.speciesId) {
       throw new BadRequestException(
         "Selected straw does not match the animal's species",
       );

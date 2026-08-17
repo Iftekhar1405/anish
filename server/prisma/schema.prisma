@@ -24,9 +24,14 @@ enum Role {
   TECHNICIAN
 }
 
-enum Species {
-  CATTLE
-  GOAT
+/**
+ * Which extra sire details a species has. Cattle straws are sold on milk
+ * figures, goat straws on growth — a new species has to say which set of
+ * fields the catalogue form should ask for.
+ */
+enum SpeciesMetrics {
+  DAIRY
+  MEAT
 }
 
 enum FertilityRating {
@@ -114,9 +119,31 @@ model RefreshToken {
   @@map("refresh_tokens")
 }
 
+/**
+ * Admin-managed list of the animals the platform serves. Started life as a
+ * two-value enum (CATTLE / GOAT); it's a table so an admin can add e.g.
+ * buffalo or sheep without a code change.
+ */
+model Species {
+  id        String         @id @default(cuid())
+  name      String         @unique
+  code      String?
+  metrics   SpeciesMetrics @default(DAIRY)
+  isActive  Boolean        @default(true)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  breeds  Breed[]
+  animals Animal[]
+  sires   SireCatalogue[]
+
+  @@map("species")
+}
+
 model Breed {
   id        String   @id @default(cuid())
-  species   Species
+  speciesId String
+  species   Species  @relation(fields: [speciesId], references: [id], onDelete: Restrict)
   name      String
   code      String?
   isActive  Boolean  @default(true)
@@ -126,7 +153,8 @@ model Breed {
   sires   SireCatalogue[]
   animals Animal[]
 
-  @@unique([species, name])
+  @@unique([speciesId, name])
+  @@index([speciesId])
   @@map("breeds")
 }
 
@@ -177,7 +205,8 @@ model ServiceArea {
 
 model SireCatalogue {
   id              String          @id @default(cuid())
-  species         Species
+  speciesId       String
+  species         Species         @relation(fields: [speciesId], references: [id], onDelete: Restrict)
   name            String
   breedId         String
   breed           Breed           @relation(fields: [breedId], references: [id], onDelete: Restrict)
@@ -203,7 +232,7 @@ model SireCatalogue {
 
   batches Batch[]
 
-  @@index([species])
+  @@index([speciesId])
   @@index([breedId])
   @@map("sire_catalogue")
 }
@@ -231,7 +260,8 @@ model Animal {
   id             String               @id @default(cuid())
   farmerId       String
   farmer         User                 @relation(fields: [farmerId], references: [id], onDelete: Cascade)
-  species        Species
+  speciesId      String
+  species        Species              @relation(fields: [speciesId], references: [id], onDelete: Restrict)
   breedId        String?
   breed          Breed?               @relation(fields: [breedId], references: [id], onDelete: SetNull)
   // Free-text breed, for farmers who don't know the exact registered breed or
@@ -249,6 +279,7 @@ model Animal {
 
   @@unique([farmerId, tag])
   @@index([farmerId])
+  @@index([speciesId])
   @@map("animals")
 }
 

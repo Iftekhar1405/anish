@@ -1,10 +1,9 @@
-import { IsEnum, IsOptional, IsString } from 'class-validator';
-import { Species } from '@prisma/client';
+import { IsOptional, IsString } from 'class-validator';
 
 export class ConceptionReportQueryDto {
   @IsOptional()
-  @IsEnum(Species)
-  species?: Species;
+  @IsString()
+  speciesId?: string;
 
   @IsOptional()
   @IsString()

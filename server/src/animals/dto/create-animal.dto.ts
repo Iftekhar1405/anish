@@ -8,7 +8,7 @@ import {
   Min,
   MinLength,
 } from 'class-validator';
-import { AnimalBreedingStatus, Species } from '@prisma/client';
+import { AnimalBreedingStatus } from '@prisma/client';
 
 export class CreateAnimalDto {
   /** Required when an Admin creates on behalf of a farmer; ignored/derived for a Farmer caller. */
@@ -16,8 +16,8 @@ export class CreateAnimalDto {
   @IsString()
   farmerId?: string;
 
-  @IsEnum(Species)
-  species!: Species;
+  @IsString()
+  speciesId!: string;
 
   @IsOptional()
   @IsString()

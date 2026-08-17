@@ -9,12 +9,12 @@ import {
   Min,
   MinLength,
 } from 'class-validator';
-import { AnimalBreedingStatus, Species } from '@prisma/client';
+import { AnimalBreedingStatus } from '@prisma/client';
 
 export class UpdateAnimalDto {
   @IsOptional()
-  @IsEnum(Species)
-  species?: Species;
+  @IsString()
+  speciesId?: string;
 
   @IsOptional()
   @IsString()

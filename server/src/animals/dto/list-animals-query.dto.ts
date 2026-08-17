@@ -1,5 +1,5 @@
 import { IsEnum, IsOptional, IsString } from 'class-validator';
-import { AnimalBreedingStatus, Species } from '@prisma/client';
+import { AnimalBreedingStatus } from '@prisma/client';
 import { PaginationQueryDto } from '../../common/pagination';
 
 export class ListAnimalsQueryDto extends PaginationQueryDto {
@@ -8,8 +8,8 @@ export class ListAnimalsQueryDto extends PaginationQueryDto {
   farmerId?: string;
 
   @IsOptional()
-  @IsEnum(Species)
-  species?: Species;
+  @IsString()
+  speciesId?: string;
 
   @IsOptional()
   @IsEnum(AnimalBreedingStatus)

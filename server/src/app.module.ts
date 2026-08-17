@@ -9,6 +9,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { HealthModule } from './health/health.module';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
+import { SpeciesModule } from './species/species.module';
 import { BreedsModule } from './breeds/breeds.module';
 import { OrganizationsModule } from './organizations/organizations.module';
 import { DistrictsModule } from './districts/districts.module';
@@ -29,6 +30,7 @@ import { ReportsModule } from './reports/reports.module';
     HealthModule,
     AuthModule,
     UsersModule,
+    SpeciesModule,
     BreedsModule,
     OrganizationsModule,
     DistrictsModule,

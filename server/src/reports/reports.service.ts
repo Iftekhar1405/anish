@@ -49,7 +49,9 @@ export class ReportsService {
   }> {
     const [batches, { lowStockThreshold }] = await Promise.all([
       this.prisma.batch.findMany({
-        include: { sire: { select: { id: true, name: true, species: true } } },
+        include: {
+        sire: { select: { id: true, name: true, species: { select: { name: true } } } },
+      },
       }),
       this.settings.get(),
     ]);
@@ -64,7 +66,7 @@ export class ReportsService {
       const entry = bySireMap.get(batch.sireId) ?? {
         sireId: batch.sireId,
         sireName: batch.sire.name,
-        species: batch.sire.species,
+        species: batch.sire.species.name,
         quantityTotal: 0,
         quantityAvailable: 0,
         quantityUsed: 0,
@@ -172,7 +174,7 @@ export class ReportsService {
     byStatus: Record<AnimalBreedingStatus, number>;
   }> {
     const where: Prisma.AnimalWhereInput = {
-      ...(query.species ? { species: query.species } : {}),
+      ...(query.speciesId ? { speciesId: query.speciesId } : {}),
       ...(query.breedId ? { breedId: query.breedId } : {}),
     };
     const grouped = await this.prisma.animal.groupBy({

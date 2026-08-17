@@ -6,6 +6,7 @@ import {
 import { Breed, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { buildResult, PaginatedResult, paginate } from '../common/pagination';
+import { SpeciesService } from '../species/species.service';
 import { CreateBreedDto } from './dto/create-breed.dto';
 import { UpdateBreedDto } from './dto/update-breed.dto';
 import { ListBreedsQueryDto } from './dto/list-breeds-query.dto';
@@ -14,18 +15,27 @@ const DUPLICATE = 'A breed with this name already exists for this species';
 
 @Injectable()
 export class BreedsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly species: SpeciesService,
+  ) {}
 
   async list(query: ListBreedsQueryDto): Promise<PaginatedResult<Breed>> {
     const { page, pageSize, skip, take } = paginate(query);
     const where: Prisma.BreedWhereInput = {
-      ...(query.species ? { species: query.species } : {}),
+      ...(query.speciesId ? { speciesId: query.speciesId } : {}),
       ...(query.search
         ? { name: { contains: query.search, mode: 'insensitive' } }
         : {}),
     };
     const [items, total] = await this.prisma.$transaction([
-      this.prisma.breed.findMany({ where, orderBy: { name: 'asc' }, skip, take }),
+      this.prisma.breed.findMany({
+        where,
+        orderBy: { name: 'asc' },
+        include: { species: { select: { id: true, name: true, code: true, metrics: true } } },
+        skip,
+        take,
+      }),
       this.prisma.breed.count({ where }),
     ]);
     return buildResult(items, total, page, pageSize);
@@ -36,8 +46,12 @@ export class BreedsService {
   }
 
   async create(dto: CreateBreedDto): Promise<Breed> {
+    await this.species.assertSelectable(dto.speciesId);
     try {
-      return await this.prisma.breed.create({ data: dto });
+      return await this.prisma.breed.create({
+        data: dto,
+        include: { species: true },
+      });
     } catch (err) {
       throw this.mapError(err);
     }
@@ -46,14 +60,21 @@ export class BreedsService {
   async update(id: string, dto: UpdateBreedDto): Promise<Breed> {
     await this.getOrThrow(id);
     try {
-      return await this.prisma.breed.update({ where: { id }, data: dto });
+      return await this.prisma.breed.update({
+        where: { id },
+        data: dto,
+        include: { species: true },
+      });
     } catch (err) {
       throw this.mapError(err);
     }
   }
 
   private async getOrThrow(id: string): Promise<Breed> {
-    const breed = await this.prisma.breed.findUnique({ where: { id } });
+    const breed = await this.prisma.breed.findUnique({
+      where: { id },
+      include: { species: true },
+    });
     if (!breed) throw new NotFoundException('Breed not found');
     return breed;
   }

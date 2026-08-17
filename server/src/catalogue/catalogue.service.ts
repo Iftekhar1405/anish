@@ -2,23 +2,28 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma, SireCatalogue } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { buildResult, PaginatedResult, paginate } from '../common/pagination';
+import { SpeciesService } from '../species/species.service';
 import { CreateSireDto } from './dto/create-sire.dto';
 import { UpdateSireDto } from './dto/update-sire.dto';
 import { ListSiresQueryDto } from './dto/list-sires-query.dto';
 
 const sireInclude = {
-  breed: { select: { id: true, name: true, species: true } },
+  species: { select: { id: true, name: true, code: true, metrics: true } },
+  breed: { select: { id: true, name: true, speciesId: true } },
   organization: { select: { id: true, name: true } },
 } satisfies Prisma.SireCatalogueInclude;
 
 @Injectable()
 export class CatalogueService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly species: SpeciesService,
+  ) {}
 
   async list(query: ListSiresQueryDto): Promise<PaginatedResult<SireCatalogue>> {
     const { page, pageSize, skip, take } = paginate(query);
     const where: Prisma.SireCatalogueWhereInput = {
-      ...(query.species ? { species: query.species } : {}),
+      ...(query.speciesId ? { speciesId: query.speciesId } : {}),
       ...(query.breedId ? { breedId: query.breedId } : {}),
       ...(query.search
         ? { name: { contains: query.search, mode: 'insensitive' } }
@@ -42,6 +47,7 @@ export class CatalogueService {
   }
 
   async create(dto: CreateSireDto): Promise<SireCatalogue> {
+    await this.species.assertSelectable(dto.speciesId);
     try {
       return await this.prisma.sireCatalogue.create({
         data: dto,
@@ -54,6 +60,7 @@ export class CatalogueService {
 
   async update(id: string, dto: UpdateSireDto): Promise<SireCatalogue> {
     await this.getOrThrow(id);
+    if (dto.speciesId) await this.species.assertSelectable(dto.speciesId);
     try {
       return await this.prisma.sireCatalogue.update({
         where: { id },

@@ -9,20 +9,35 @@ import { Animal, BreedingHistory, Prisma, Role } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import type { JwtPayload } from '../auth/interfaces/jwt-payload.interface';
 import { buildResult, PaginatedResult, paginate } from '../common/pagination';
+import { SpeciesService } from '../species/species.service';
 import { CreateAnimalDto } from './dto/create-animal.dto';
 import { UpdateAnimalDto } from './dto/update-animal.dto';
 import { ListAnimalsQueryDto } from './dto/list-animals-query.dto';
 
 const DUPLICATE = 'This farmer already has an animal with this tag';
 
+const speciesSelect = {
+  select: { id: true, name: true, code: true, metrics: true },
+} satisfies Prisma.SpeciesDefaultArgs;
+
+const sireSummarySelect = {
+  id: true,
+  name: true,
+  species: speciesSelect,
+} satisfies Prisma.SireCatalogueSelect;
+
 const animalInclude = {
   farmer: { select: { id: true, name: true, phone: true } },
-  breed: { select: { id: true, name: true, species: true } },
+  species: speciesSelect,
+  breed: { select: { id: true, name: true, speciesId: true } },
 } satisfies Prisma.AnimalInclude;
 
 @Injectable()
 export class AnimalsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly species: SpeciesService,
+  ) {}
 
   async list(
     query: ListAnimalsQueryDto,
@@ -31,7 +46,7 @@ export class AnimalsService {
     const { page, pageSize, skip, take } = paginate(query);
     const where: Prisma.AnimalWhereInput = {
       farmerId: currentUser.role === Role.FARMER ? currentUser.sub : query.farmerId,
-      ...(query.species ? { species: query.species } : {}),
+      ...(query.speciesId ? { speciesId: query.speciesId } : {}),
       ...(query.breedingStatus ? { breedingStatus: query.breedingStatus } : {}),
       ...(query.search
         ? { tag: { contains: query.search, mode: 'insensitive' } }
@@ -68,9 +83,7 @@ export class AnimalsService {
       include: {
         booking: {
           select: {
-            batch: {
-              select: { sire: { select: { id: true, name: true, species: true } } },
-            },
+            batch: { select: { sire: { select: sireSummarySelect } } },
           },
         },
       },
@@ -80,6 +93,7 @@ export class AnimalsService {
   async create(dto: CreateAnimalDto, currentUser: JwtPayload): Promise<Animal> {
     const farmerId = this.resolveFarmerId(dto.farmerId, currentUser);
     await this.assertFarmer(farmerId);
+    await this.species.assertSelectable(dto.speciesId);
     try {
       return await this.prisma.animal.create({
         data: { ...this.normalizeBreed(dto), farmerId },
@@ -97,6 +111,7 @@ export class AnimalsService {
   ): Promise<Animal> {
     const current = await this.getOrThrow(id);
     this.assertOwnership(current, currentUser);
+    if (dto.speciesId) await this.species.assertSelectable(dto.speciesId);
     // Farmers manage their own animal's details but not the admin soft-delete flag.
     const normalized = this.normalizeBreed(dto);
     const data =
@@ -183,7 +198,9 @@ export class AnimalsService {
   private mapError(err: unknown): Error {
     if (err instanceof Prisma.PrismaClientKnownRequestError) {
       if (err.code === 'P2002') return new ConflictException(DUPLICATE);
-      if (err.code === 'P2003') return new NotFoundException('Breed not found');
+      if (err.code === 'P2003') {
+        return new NotFoundException('Referenced breed or species not found');
+      }
     }
     return err instanceof Error ? err : new Error('Unknown error');
   }

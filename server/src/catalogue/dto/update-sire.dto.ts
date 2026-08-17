@@ -9,12 +9,12 @@ import {
   Min,
   MinLength,
 } from 'class-validator';
-import { FertilityRating, Species } from '@prisma/client';
+import { FertilityRating } from '@prisma/client';
 
 export class UpdateSireDto {
   @IsOptional()
-  @IsEnum(Species)
-  species?: Species;
+  @IsString()
+  speciesId?: string;
 
   @IsOptional()
   @IsString()

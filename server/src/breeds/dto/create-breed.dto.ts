@@ -1,9 +1,8 @@
-import { IsEnum, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
-import { Species } from '@prisma/client';
+import { IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
 
 export class CreateBreedDto {
-  @IsEnum(Species)
-  species!: Species;
+  @IsString()
+  speciesId!: string;
 
   @IsString()
   @MinLength(2)

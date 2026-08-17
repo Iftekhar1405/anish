@@ -29,7 +29,9 @@ export class BatchesService {
       this.prisma.batch.findMany({
         where,
         orderBy: { createdAt: 'desc' },
-        include: { sire: { select: { id: true, name: true, species: true } } },
+        include: {
+        sire: { select: { id: true, name: true, species: { select: { id: true, name: true, code: true, metrics: true } } } },
+      },
         skip,
         take,
       }),
