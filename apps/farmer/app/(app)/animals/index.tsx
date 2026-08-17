@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { View } from "react-native";
+import { Text, View } from "react-native";
 import { useRouter, type Href } from "expo-router";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
@@ -52,6 +52,13 @@ export default function AnimalsScreen() {
     label: s.name,
     value: s.id,
   }));
+  // Without this the form just refuses to save with "Species is required" and
+  // no hint that the list behind the dropdown never arrived.
+  const speciesUnavailable = speciesQuery.isError
+    ? "Couldn't load the species list — check your connection and try again."
+    : speciesOptions.length === 0 && !speciesQuery.isLoading
+      ? "No species available yet — ask your centre to add one."
+      : null;
   const breedQuery = useBreeds(speciesId);
   // Farmers frequently don't know the registered breed — and the master list
   // may not carry theirs — so "Other" always sits at the bottom of the list.
@@ -160,6 +167,9 @@ export default function AnimalsScreen() {
         }}
       >
         <View className="gap-3">
+          {speciesUnavailable ? (
+            <Text className="text-sm text-error">{speciesUnavailable}</Text>
+          ) : null}
           <Controller
             control={form.control}
             name="speciesId"
@@ -177,6 +187,7 @@ export default function AnimalsScreen() {
                   form.setValue("breedOther", "");
                 }}
                 disabled={editing !== null}
+                emptyMessage={speciesUnavailable ?? "No species available."}
                 error={form.formState.errors.speciesId?.message}
               />
             )}

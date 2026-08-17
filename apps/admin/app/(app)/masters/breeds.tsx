@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { View } from "react-native";
+import { Text, View } from "react-native";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
 import { errorMessage } from "@ai-platform/api-client";
@@ -35,6 +35,14 @@ export default function BreedsScreen() {
     label: s.name,
     value: s.id,
   }));
+  // A species list that failed to load leaves this form unfillable — say so,
+  // rather than letting the user hit Save and get "Species is required".
+  const speciesUnavailable = speciesQuery.isError
+    ? "Couldn't load the species list — check your connection and try again."
+    : speciesOptions.length === 0 && !speciesQuery.isLoading
+      ? "No species yet. Add one under Masters → Species first."
+      : null;
+
 
   const form = useForm<BreedFormInput, unknown, BreedFormValues>({
     resolver: zodResolver(breedFormSchema),
@@ -135,6 +143,9 @@ export default function BreedsScreen() {
         }}
       >
         <View className="gap-3">
+          {speciesUnavailable ? (
+            <Text className="text-sm text-error">{speciesUnavailable}</Text>
+          ) : null}
           <Controller
             control={form.control}
             name="speciesId"
@@ -148,6 +159,7 @@ export default function BreedsScreen() {
                 options={speciesOptions}
                 onChange={field.onChange}
                 disabled={editing !== null}
+                emptyMessage={speciesUnavailable ?? "No species available."}
                 error={form.formState.errors.speciesId?.message}
               />
             )}

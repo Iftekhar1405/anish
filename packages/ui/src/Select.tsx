@@ -25,6 +25,8 @@ export interface SelectProps<T extends string = string> {
   onChange: (value: T) => void;
   error?: string;
   disabled?: boolean;
+  /** Shown in place of the list when there is nothing to choose from. */
+  emptyMessage?: string;
 }
 
 export interface MultiSelectProps<T extends string = string> {
@@ -37,6 +39,8 @@ export interface MultiSelectProps<T extends string = string> {
   disabled?: boolean;
   /** Shown under the field, e.g. "3 selected". Defaults to the joined labels. */
   summary?: string;
+  /** Shown in place of the list when there is nothing to choose from. */
+  emptyMessage?: string;
 }
 
 /** The field itself — the tappable box that opens the sheet. */
@@ -122,6 +126,19 @@ function OptionSheet({
   );
 }
 
+/**
+ * An empty dropdown used to open as a blank sheet with nothing to tap and no
+ * explanation — which reads as "the app is broken" when the real cause is that
+ * the list behind it hasn't loaded.
+ */
+function EmptyOptions({ message }: { message: string }) {
+  return (
+    <View className="px-4 py-6">
+      <Text className="text-center text-sm text-neutral-500">{message}</Text>
+    </View>
+  );
+}
+
 function OptionRow({
   label,
   selected,
@@ -164,6 +181,7 @@ export function Select<T extends string = string>({
   onChange,
   error,
   disabled = false,
+  emptyMessage = "Nothing to choose from yet.",
 }: SelectProps<T>) {
   const [open, setOpen] = useState(false);
   const selected = options.find((option) => option.value === value);
@@ -181,25 +199,29 @@ export function Select<T extends string = string>({
       />
 
       <OptionSheet visible={open} onClose={() => setOpen(false)}>
-        {(maxHeight) => (
-          <FlatList
-            style={{ maxHeight }}
-            data={options}
-            keyExtractor={(item) => item.value}
-            keyboardShouldPersistTaps="handled"
-            renderItem={({ item }) => (
-              <OptionRow
-                label={item.label}
-                selected={item.value === value}
-                showCheck={false}
-                onPress={() => {
-                  onChange(item.value);
-                  setOpen(false);
-                }}
-              />
-            )}
-          />
-        )}
+        {(maxHeight) =>
+          options.length === 0 ? (
+            <EmptyOptions message={emptyMessage} />
+          ) : (
+            <FlatList
+              style={{ maxHeight }}
+              data={options}
+              keyExtractor={(item) => item.value}
+              keyboardShouldPersistTaps="handled"
+              renderItem={({ item }) => (
+                <OptionRow
+                  label={item.label}
+                  selected={item.value === value}
+                  showCheck={false}
+                  onPress={() => {
+                    onChange(item.value);
+                    setOpen(false);
+                  }}
+                />
+              )}
+            />
+          )
+        }
       </OptionSheet>
     </View>
   );
@@ -215,6 +237,7 @@ export function MultiSelect<T extends string = string>({
   error,
   disabled = false,
   summary,
+  emptyMessage = "Nothing to choose from yet.",
 }: MultiSelectProps<T>) {
   const [open, setOpen] = useState(false);
   const selectedLabels = options
@@ -247,6 +270,7 @@ export function MultiSelect<T extends string = string>({
       <OptionSheet visible={open} onClose={() => setOpen(false)}>
         {(maxHeight) => (
           <>
+            {options.length === 0 ? <EmptyOptions message={emptyMessage} /> : null}
             <FlatList
               style={{ maxHeight: maxHeight - 64 }}
               data={options}

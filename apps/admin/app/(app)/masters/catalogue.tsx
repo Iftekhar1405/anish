@@ -79,6 +79,14 @@ export default function CatalogueScreen() {
     label: sp.name,
     value: sp.id,
   }));
+  // A species list that failed to load leaves this form unfillable — say so,
+  // rather than letting the user hit Save and get "Species is required".
+  const speciesUnavailable = speciesQuery.isError
+    ? "Couldn't load the species list — check your connection and try again."
+    : speciesOptions.length === 0 && !speciesQuery.isLoading
+      ? "No species yet. Add one under Masters → Species first."
+      : null;
+
   // Which extra fields this species asks for — set by the admin on the species
   // itself, so a species added later still gets a sensible form.
   const metrics =
@@ -302,6 +310,7 @@ export default function CatalogueScreen() {
                   // The breed list is species-scoped, so a stale pick has to go.
                   form.setValue("breedId", "");
                 }}
+                emptyMessage={speciesUnavailable ?? "No species available."}
                 error={form.formState.errors.speciesId?.message}
               />
             )}

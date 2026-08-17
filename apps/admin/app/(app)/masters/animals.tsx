@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { View } from "react-native";
+import { Text, View } from "react-native";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
 import { errorMessage } from "@ai-platform/api-client";
@@ -50,6 +50,14 @@ export default function AnimalsScreen() {
     label: s.name,
     value: s.id,
   }));
+  // A species list that failed to load leaves this form unfillable — say so,
+  // rather than letting the user hit Save and get "Species is required".
+  const speciesUnavailable = speciesQuery.isError
+    ? "Couldn't load the species list — check your connection and try again."
+    : speciesOptions.length === 0 && !speciesQuery.isLoading
+      ? "No species yet. Add one under Masters → Species first."
+      : null;
+
   const create = animals.useCreate();
   const update = animals.useUpdate();
 
@@ -179,6 +187,9 @@ export default function AnimalsScreen() {
         }}
       >
         <View className="gap-3">
+          {speciesUnavailable ? (
+            <Text className="text-sm text-error">{speciesUnavailable}</Text>
+          ) : null}
           <Controller
             control={form.control}
             name="farmerId"
@@ -212,6 +223,7 @@ export default function AnimalsScreen() {
                   form.setValue("breedId", "");
                   form.setValue("breedOther", "");
                 }}
+                emptyMessage={speciesUnavailable ?? "No species available."}
                 error={form.formState.errors.speciesId?.message}
               />
             )}
