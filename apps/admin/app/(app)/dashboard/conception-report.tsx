@@ -1,13 +1,9 @@
 import { useState } from "react";
 import { ScrollView, Text, View } from "react-native";
 import { Card, EmptyState, Select, Spinner, StatCard } from "@ai-platform/ui";
-import { SPECIES, type AnimalBreedingStatus } from "@ai-platform/types";
+import type { AnimalBreedingStatus } from "@ai-platform/types";
 import { useConceptionReport } from "../../../src/features/reports/hooks";
-
-const speciesFilterOptions = [
-  { label: "All species", value: "" },
-  ...SPECIES.map((s) => ({ label: s, value: s })),
-];
+import { species as speciesMaster } from "../../../src/features/masters/hooks";
 
 const STATUS_COLOR: Record<AnimalBreedingStatus, string> = {
   OPEN: "bg-neutral-400",
@@ -17,18 +13,21 @@ const STATUS_COLOR: Record<AnimalBreedingStatus, string> = {
 };
 
 export default function ConceptionReportScreen() {
-  const [species, setSpecies] = useState("");
-  const query = useConceptionReport({
-    species: species ? (species as (typeof SPECIES)[number]) : undefined,
-  });
+  const [speciesId, setSpeciesId] = useState("");
+  const speciesQuery = speciesMaster.useList({ pageSize: 100 });
+  const speciesFilterOptions = [
+    { label: "All species", value: "" },
+    ...(speciesQuery.data?.items ?? []).map((s) => ({ label: s.name, value: s.id })),
+  ];
+  const query = useConceptionReport({ speciesId: speciesId || undefined });
 
   return (
     <ScrollView className="flex-1 bg-neutral-50" contentContainerClassName="gap-3 p-4">
       <Select
         label="Species"
-        value={species}
+        value={speciesId}
         options={speciesFilterOptions}
-        onChange={setSpecies}
+        onChange={setSpeciesId}
       />
 
       {query.isLoading ? (

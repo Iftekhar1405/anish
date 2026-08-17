@@ -9,22 +9,20 @@ import {
   animalFormSchema,
   breedLabel,
   OTHER_BREED_VALUE,
-  SPECIES,
   toBreedChoice,
   type Animal,
   type AnimalFormInput,
   type AnimalFormValues,
 } from "@ai-platform/types";
-import { animals, breeds } from "../../../src/features/masters/hooks";
+import { animals, breeds, species } from "../../../src/features/masters/hooks";
 import { useFarmers } from "../../../src/features/users/hooks";
 
 const PAGE_SIZE = 10;
-const speciesOptions = SPECIES.map((s) => ({ label: s, value: s }));
 const statusOptions = ANIMAL_BREEDING_STATUSES.map((s) => ({ label: s, value: s }));
 
 const EMPTY_FORM: AnimalFormInput = {
   farmerId: "",
-  species: "CATTLE",
+  speciesId: "",
   breedId: "",
   breedOther: "",
   tag: "",
@@ -47,6 +45,11 @@ export default function AnimalsScreen() {
   });
   const farmerQuery = useFarmers({ pageSize: 100 });
   const breedQuery = breeds.useList({ pageSize: 100 });
+  const speciesQuery = species.useList({ pageSize: 100, isActive: true });
+  const speciesOptions = (speciesQuery.data?.items ?? []).map((s) => ({
+    label: s.name,
+    value: s.id,
+  }));
   const create = animals.useCreate();
   const update = animals.useUpdate();
 
@@ -60,14 +63,14 @@ export default function AnimalsScreen() {
     defaultValues: EMPTY_FORM,
   });
 
-  const species = form.watch("species");
+  const speciesId = form.watch("speciesId");
   const breedChoice = form.watch("breedId");
   // Farmers often don't know the registered breed, and the master list won't
   // cover every local one — "Other" reveals a free-text field.
   const breedOptions = [
     { label: "Not sure / none", value: "" },
     ...(breedQuery.data?.items ?? [])
-      .filter((b) => b.species === species)
+      .filter((b) => b.speciesId === speciesId)
       .map((b) => ({ label: b.name, value: b.id })),
     { label: "Other — type it in", value: OTHER_BREED_VALUE },
   ];
@@ -82,7 +85,7 @@ export default function AnimalsScreen() {
     setActiveFlag(row.isActive);
     form.reset({
       farmerId: row.farmerId,
-      species: row.species,
+      speciesId: row.speciesId,
       ...toBreedChoice(row),
       tag: row.tag,
       ageMonths: row.ageMonths != null ? String(row.ageMonths) : "",
@@ -96,7 +99,7 @@ export default function AnimalsScreen() {
         await update.mutateAsync({
           id: editing.id,
           input: {
-            species: values.species,
+            speciesId: values.speciesId,
             breedId: values.breedId,
             breedOther: values.breedOther,
             tag: values.tag,
@@ -138,7 +141,7 @@ export default function AnimalsScreen() {
       <Table<Animal>
         columns={[
           { key: "tag", header: "Tag / Number / Name", accessor: (r) => r.tag },
-          { key: "species", header: "Species", accessor: (r) => r.species },
+          { key: "species", header: "Species", accessor: (r) => r.species?.name },
           { key: "breed", header: "Breed", hideOnMobile: true, accessor: (r) => breedLabel(r) },
           { key: "farmer", header: "Farmer", hideOnMobile: true, accessor: (r) => r.farmer?.name },
           {
@@ -195,18 +198,21 @@ export default function AnimalsScreen() {
           />
           <Controller
             control={form.control}
-            name="species"
+            name="speciesId"
             render={({ field }) => (
               <Select
                 label="Species"
-                value={field.value}
+                placeholder={
+                  speciesQuery.isLoading ? "Loading species…" : "Select a species"
+                }
+                value={field.value || null}
                 options={speciesOptions}
                 onChange={(v) => {
                   field.onChange(v);
                   form.setValue("breedId", "");
                   form.setValue("breedOther", "");
                 }}
-                error={form.formState.errors.species?.message}
+                error={form.formState.errors.speciesId?.message}
               />
             )}
           />

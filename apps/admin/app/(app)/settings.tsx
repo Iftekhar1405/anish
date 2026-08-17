@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
-import { ApiError } from "@ai-platform/api-client";
+import { errorMessage } from "@ai-platform/api-client";
 import {
   Button,
   Card,
@@ -36,10 +36,7 @@ export default function SettingsScreen() {
       await update.mutateAsync(values);
       toast.show("Settings saved", "success");
     } catch (err) {
-      toast.show(
-        err instanceof ApiError ? err.message : "Could not save settings",
-        "error",
-      );
+      toast.show(errorMessage(err, "Could not save settings"), "error");
     }
   });
 

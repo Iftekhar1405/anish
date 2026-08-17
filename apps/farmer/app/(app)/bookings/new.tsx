@@ -49,9 +49,11 @@ export default function NewBookingScreen() {
   const animals = animalsQuery.data?.items ?? [];
   // Every animal in one booking run shares the same straw, so the species is
   // fixed by the first pick and the rest of the list is filtered to match.
-  const selectedSpecies = animals.find((a) => a.id === animalIds[0])?.species;
+  const selectedAnimal = animals.find((a) => a.id === animalIds[0]);
+  const selectedSpeciesId = selectedAnimal?.speciesId;
+  const selectedSpeciesName = selectedAnimal?.species?.name ?? "matching";
 
-  const siresQuery = useSires({ species: selectedSpecies, pageSize: 100 });
+  const siresQuery = useSires({ speciesId: selectedSpeciesId, pageSize: 100 });
   const availableSires = (siresQuery.data?.items ?? []).filter((s) => s.isAvailable);
 
   const batchesQuery = useBatchesForSire({ sireId: sireId || undefined, pageSize: 20 });
@@ -64,7 +66,7 @@ export default function NewBookingScreen() {
     // no longer applies.
     setSireId("");
     form.setValue("batchId", "");
-  }, [selectedSpecies, form]);
+  }, [selectedSpeciesId, form]);
 
   useEffect(() => {
     form.setValue("batchId", availableBatch?.id ?? "");
@@ -78,8 +80,8 @@ export default function NewBookingScreen() {
   }, [profileQuery.data?.address, form]);
 
   const animalOptions = animals
-    .filter((a) => !selectedSpecies || a.species === selectedSpecies)
-    .map((a) => ({ label: `${a.tag} (${a.species})`, value: a.id }));
+    .filter((a) => !selectedSpeciesId || a.speciesId === selectedSpeciesId)
+    .map((a) => ({ label: `${a.tag} (${a.species?.name ?? "—"})`, value: a.id }));
   const sireOptions = availableSires.map((s) => ({
     label: `${s.name} — ₹${(s.strawPriceMinor / 100).toFixed(2)}`,
     value: s.id,
@@ -153,10 +155,10 @@ export default function NewBookingScreen() {
           />
         )}
       />
-      {selectedSpecies ? (
+      {selectedSpeciesId ? (
         <Text className="-mt-2 text-xs text-neutral-500">
-          All animals in one booking must be {selectedSpecies.toLowerCase()} — they share the
-          same straw.
+          All animals in one booking must be {selectedSpeciesName} — they share the same
+          straw.
         </Text>
       ) : null}
 
@@ -169,7 +171,7 @@ export default function NewBookingScreen() {
             <Spinner label="Loading catalogue…" />
           ) : sireOptions.length === 0 ? (
             <Text className="text-sm text-neutral-500">
-              No available {selectedSpecies?.toLowerCase()} straws right now.
+              No available {selectedSpeciesName} straws right now.
             </Text>
           ) : (
             <Select

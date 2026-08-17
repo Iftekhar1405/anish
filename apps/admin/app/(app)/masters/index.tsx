@@ -9,6 +9,7 @@ import {
   MapPin,
   Milk,
   PawPrint,
+  Rabbit,
 } from "lucide-react-native";
 import { Card } from "@ai-platform/ui";
 
@@ -39,9 +40,15 @@ const MASTERS: MasterLink[] = [
     Icon: PawPrint,
   },
   {
+    href: "/masters/species",
+    title: "Species",
+    description: "The animals you serve — cattle, goats, and more",
+    Icon: Rabbit,
+  },
+  {
     href: "/masters/breeds",
     title: "Breeds",
-    description: "Cattle & goat breeds",
+    description: "Breeds within each species",
     Icon: Dna,
   },
   {

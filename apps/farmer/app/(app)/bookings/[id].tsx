@@ -52,7 +52,7 @@ export default function BookingDetailScreen() {
           </View>
         </View>
         <Row label="Bull / Buck" value={booking.batch?.sire?.name ?? "—"} />
-        <Row label="Species" value={booking.animal?.species ?? "—"} />
+        <Row label="Species" value={booking.animal?.species?.name ?? "—"} />
         <Row label="Preferred date" value={formatDdMmYyyy(booking.preferredDate)} />
         <Row label="Location" value={booking.location ?? "Your profile address"} />
         <Row label="Technician" value={booking.technician?.name ?? "Not yet assigned"} />

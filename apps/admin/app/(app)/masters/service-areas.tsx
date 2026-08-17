@@ -2,7 +2,7 @@ import { useState } from "react";
 import { View } from "react-native";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
-import { ApiError } from "@ai-platform/api-client";
+import { errorMessage } from "@ai-platform/api-client";
 import { Button, Dialog, Input, Select, Table, useToast } from "@ai-platform/ui";
 import {
   serviceAreaFormSchema,
@@ -67,10 +67,7 @@ export default function ServiceAreasScreen() {
         setCreating(false);
       }
     } catch (err) {
-      toast.show(
-        err instanceof ApiError ? err.message : "Could not save service area",
-        "error",
-      );
+      toast.show(errorMessage(err, "Could not save service area"), "error");
     }
   });
 

@@ -9,7 +9,6 @@ import {
   breedLabel,
   farmerAnimalFormSchema,
   OTHER_BREED_VALUE,
-  SPECIES,
   toBreedChoice,
   type Animal,
   type FarmerAnimalFormInput,
@@ -17,12 +16,12 @@ import {
 } from "@ai-platform/types";
 import { useMyAnimals, useCreateMyAnimal, useUpdateMyAnimal } from "../../../src/features/animals/hooks";
 import { useBreeds } from "../../../src/features/breeds/hooks";
+import { useSpecies } from "../../../src/features/species/hooks";
 
 const PAGE_SIZE = 10;
-const speciesOptions = SPECIES.map((s) => ({ label: s, value: s }));
 
 const EMPTY_FORM: FarmerAnimalFormInput = {
-  species: "CATTLE",
+  speciesId: "",
   breedId: "",
   breedOther: "",
   tag: "",
@@ -46,9 +45,14 @@ export default function AnimalsScreen() {
     defaultValues: EMPTY_FORM,
   });
 
-  const species = form.watch("species");
+  const speciesId = form.watch("speciesId");
   const breedChoice = form.watch("breedId");
-  const breedQuery = useBreeds(species);
+  const speciesQuery = useSpecies();
+  const speciesOptions = (speciesQuery.data?.items ?? []).map((s) => ({
+    label: s.name,
+    value: s.id,
+  }));
+  const breedQuery = useBreeds(speciesId);
   // Farmers frequently don't know the registered breed — and the master list
   // may not carry theirs — so "Other" always sits at the bottom of the list.
   const breedOptions = [
@@ -65,7 +69,7 @@ export default function AnimalsScreen() {
   function openEdit(row: Animal): void {
     setEditing(row);
     form.reset({
-      species: row.species,
+      speciesId: row.speciesId,
       ...toBreedChoice(row),
       tag: row.tag,
       ageMonths: row.ageMonths != null ? String(row.ageMonths) : "",
@@ -117,7 +121,7 @@ export default function AnimalsScreen() {
       <Table<Animal>
         columns={[
           { key: "tag", header: "Tag / Number / Name", accessor: (r) => r.tag },
-          { key: "species", header: "Species", accessor: (r) => r.species },
+          { key: "species", header: "Species", accessor: (r) => r.species?.name },
           { key: "breed", header: "Breed", accessor: (r) => breedLabel(r) },
           { key: "status", header: "Status", accessor: (r) => r.breedingStatus },
         ]}
@@ -158,11 +162,14 @@ export default function AnimalsScreen() {
         <View className="gap-3">
           <Controller
             control={form.control}
-            name="species"
+            name="speciesId"
             render={({ field }) => (
               <Select
                 label="Species"
-                value={field.value}
+                placeholder={
+                  speciesQuery.isLoading ? "Loading species…" : "Select a species"
+                }
+                value={field.value || null}
                 options={speciesOptions}
                 onChange={(v) => {
                   field.onChange(v);
@@ -170,7 +177,7 @@ export default function AnimalsScreen() {
                   form.setValue("breedOther", "");
                 }}
                 disabled={editing !== null}
-                error={form.formState.errors.species?.message}
+                error={form.formState.errors.speciesId?.message}
               />
             )}
           />
@@ -194,7 +201,13 @@ export default function AnimalsScreen() {
             render={({ field }) => (
               <Select
                 label="Breed (optional)"
-                placeholder={breedQuery.isLoading ? "Loading breeds…" : "Select a breed"}
+                placeholder={
+                  !speciesId
+                    ? "Pick a species first"
+                    : breedQuery.isLoading
+                      ? "Loading breeds…"
+                      : "Select a breed"
+                }
                 value={field.value || ""}
                 options={breedOptions}
                 onChange={field.onChange}

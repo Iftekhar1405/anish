@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { Species } from "./masters";
+import type { SpeciesRef } from "./masters";
 
 export const BOOKING_STATUSES = [
   "PENDING",
@@ -13,7 +13,7 @@ export type BookingStatus = (typeof BOOKING_STATUSES)[number];
 export interface Booking {
   id: string;
   animalId: string;
-  animal?: { id: string; tag: string; species: Species } | null;
+  animal?: { id: string; tag: string; species?: SpeciesRef | null } | null;
   farmerId: string;
   farmer?: {
     id: string;
@@ -26,7 +26,12 @@ export interface Booking {
   batch?: {
     id: string;
     batchNumber: string;
-    sire?: { id: string; name: string; species: Species; strawPriceMinor: number } | null;
+    sire?: {
+      id: string;
+      name: string;
+      species?: SpeciesRef | null;
+      strawPriceMinor: number;
+    } | null;
   } | null;
   technicianId: string | null;
   technician?: { id: string; name: string; phone: string } | null;

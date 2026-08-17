@@ -41,7 +41,7 @@ export default function LoginScreen() {
     >
       <View className="gap-1">
         <Text className="text-3xl font-bold text-neutral-900">Welcome back</Text>
-        <Text className="text-sm text-neutral-500">Sign in to the Farmer app</Text>
+        <Text className="text-sm text-neutral-500">Sign in to Gauri Breeding Centre</Text>
       </View>
 
       <Controller

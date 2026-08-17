@@ -32,7 +32,7 @@ export default function AnimalHistoryScreen() {
       <Card className="gap-1">
         <Text className="text-lg font-semibold text-neutral-900">{animal.tag}</Text>
         <Text className="text-sm text-neutral-500">
-          {animal.species} · {breedLabel(animal)} · {animal.breedingStatus}
+          {animal.species?.name} · {breedLabel(animal)} · {animal.breedingStatus}
         </Text>
       </Card>
 

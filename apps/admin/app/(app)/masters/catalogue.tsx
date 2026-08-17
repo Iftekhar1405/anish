@@ -3,7 +3,7 @@ import { Image, Pressable, Text, View } from "react-native";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
 import { ImagePlus, X } from "lucide-react-native";
-import { ApiError } from "@ai-platform/api-client";
+import { errorMessage } from "@ai-platform/api-client";
 import {
   Button,
   Dialog,
@@ -15,17 +15,20 @@ import {
 } from "@ai-platform/ui";
 import {
   FERTILITY_RATINGS,
-  SPECIES,
   sireFormSchema,
   type Sire,
   type SireFormInput,
   type SireFormValues,
 } from "@ai-platform/types";
-import { breeds, organizations, sires } from "../../../src/features/masters/hooks";
+import {
+  breeds,
+  organizations,
+  sires,
+  species,
+} from "../../../src/features/masters/hooks";
 import { pickAndUploadImage } from "../../../src/features/masters/upload";
 
 const PAGE_SIZE = 10;
-const speciesOptions = SPECIES.map((s) => ({ label: s, value: s }));
 const fertilityOptions = FERTILITY_RATINGS.map((f) => ({ label: f, value: f }));
 
 function formatPrice(minor: number): string {
@@ -48,6 +51,7 @@ export default function CatalogueScreen() {
     search: search || undefined,
   });
   const breedQuery = breeds.useList({ pageSize: 100 });
+  const speciesQuery = species.useList({ pageSize: 100, isActive: true });
   const orgQuery = organizations.useList({ pageSize: 100 });
   const create = sires.useCreate();
   const update = sires.useUpdate();
@@ -55,7 +59,7 @@ export default function CatalogueScreen() {
   const form = useForm<SireFormInput, unknown, SireFormValues>({
     resolver: zodResolver(sireFormSchema),
     defaultValues: {
-      species: "CATTLE",
+      speciesId: "",
       name: "",
       breedId: "",
       organizationId: "",
@@ -70,10 +74,18 @@ export default function CatalogueScreen() {
     },
   });
 
-  const species = form.watch("species");
+  const speciesId = form.watch("speciesId");
+  const speciesOptions = (speciesQuery.data?.items ?? []).map((sp) => ({
+    label: sp.name,
+    value: sp.id,
+  }));
+  // Which extra fields this species asks for — set by the admin on the species
+  // itself, so a species added later still gets a sensible form.
+  const metrics =
+    (speciesQuery.data?.items ?? []).find((sp) => sp.id === speciesId)?.metrics ?? "DAIRY";
 
   const breedOptions = (breedQuery.data?.items ?? [])
-    .filter((b) => b.species === species)
+    .filter((b) => b.speciesId === speciesId)
     .map((b) => ({ label: b.name, value: b.id }));
   const orgOptions = [
     { label: "None", value: "" },
@@ -82,7 +94,7 @@ export default function CatalogueScreen() {
 
   function resetForm(): void {
     form.reset({
-      species: "CATTLE",
+      speciesId: "",
       name: "",
       breedId: "",
       organizationId: "",
@@ -108,7 +120,7 @@ export default function CatalogueScreen() {
     setAvailable(row.isAvailable);
     setImageUrl(row.imageUrl);
     form.reset({
-      species: row.species,
+      speciesId: row.speciesId,
       name: row.name,
       breedId: row.breedId,
       organizationId: row.organizationId ?? "",
@@ -165,10 +177,7 @@ export default function CatalogueScreen() {
         setCreating(false);
       }
     } catch (err) {
-      toast.show(
-        err instanceof ApiError ? err.message : "Could not save sire",
-        "error",
-      );
+      toast.show(errorMessage(err, "Could not save sire"), "error");
     }
   });
 
@@ -193,7 +202,7 @@ export default function CatalogueScreen() {
       <Table<Sire>
         columns={[
           { key: "name", header: "Name", accessor: (r) => r.name },
-          { key: "species", header: "Species", accessor: (r) => r.species },
+          { key: "species", header: "Species", accessor: (r) => r.species?.name },
           { key: "breed", header: "Breed", hideOnMobile: true, accessor: (r) => r.breed?.name },
           {
             key: "price",
@@ -279,17 +288,21 @@ export default function CatalogueScreen() {
 
           <Controller
             control={form.control}
-            name="species"
+            name="speciesId"
             render={({ field }) => (
               <Select
                 label="Species"
-                value={field.value}
+                placeholder={
+                  speciesQuery.isLoading ? "Loading species…" : "Select a species"
+                }
+                value={field.value || null}
                 options={speciesOptions}
                 onChange={(v) => {
                   field.onChange(v);
+                  // The breed list is species-scoped, so a stale pick has to go.
                   form.setValue("breedId", "");
                 }}
-                error={form.formState.errors.species?.message}
+                error={form.formState.errors.speciesId?.message}
               />
             )}
           />
@@ -360,7 +373,7 @@ export default function CatalogueScreen() {
             )}
           />
 
-          {species === "CATTLE" ? (
+          {metrics === "DAIRY" ? (
             <>
               <Controller
                 control={form.control}

@@ -1,10 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
-import type { Species } from "@ai-platform/types";
 import { breedsApi } from "./api";
 
-export function useBreeds(species?: Species) {
+export function useBreeds(speciesId?: string) {
   return useQuery({
-    queryKey: ["breeds", species],
-    queryFn: () => breedsApi.list({ species, pageSize: 100 }),
+    queryKey: ["breeds", speciesId],
+    // No species picked yet means there's no meaningful breed list to show.
+    enabled: Boolean(speciesId),
+    queryFn: () => breedsApi.list({ speciesId, pageSize: 100 }),
   });
 }

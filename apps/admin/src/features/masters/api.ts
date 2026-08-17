@@ -11,6 +11,7 @@ import type {
   ServiceArea,
   Sire,
   Species,
+  SpeciesMetrics,
   UploadSignature,
 } from "@ai-platform/types";
 import { apiClient } from "../../lib/api";
@@ -35,8 +36,20 @@ function toQuery(params: object): string {
 
 /* --------------------------------------------------------- request shapes */
 
+export interface SpeciesCreate {
+  name: string;
+  code?: string;
+  metrics: SpeciesMetrics;
+}
+export interface SpeciesUpdate {
+  name?: string;
+  code?: string;
+  metrics?: SpeciesMetrics;
+  isActive?: boolean;
+}
+
 export interface BreedCreate {
-  species: Species;
+  speciesId: string;
   name: string;
   code?: string;
 }
@@ -72,7 +85,7 @@ export interface ServiceAreaUpdate {
 }
 
 export interface SireCreate {
-  species: Species;
+  speciesId: string;
   name: string;
   breedId: string;
   organizationId?: string;
@@ -105,7 +118,7 @@ export interface BatchUpdate {
 
 export interface AnimalCreate {
   farmerId: string;
-  species: Species;
+  speciesId: string;
   breedId?: string;
   /** Free-text breed, when the farmer's breed isn't in the master list. */
   breedOther?: string;
@@ -114,7 +127,7 @@ export interface AnimalCreate {
   breedingStatus?: Animal["breedingStatus"];
 }
 export interface AnimalUpdate {
-  species?: Species;
+  speciesId?: string;
   breedId?: string;
   breedOther?: string;
   tag?: string;
@@ -126,6 +139,14 @@ export interface AnimalUpdate {
 /* ------------------------------------------------------------------- apis */
 
 export const mastersApi = {
+  // species
+  listSpecies: (q: ListParams & { isActive?: boolean }) =>
+    apiClient.get<PaginatedResult<Species>>(`/species${toQuery(q)}`),
+  createSpecies: (input: SpeciesCreate) =>
+    apiClient.post<Species>(`/species`, input),
+  updateSpecies: (id: string, input: SpeciesUpdate) =>
+    apiClient.patch<Species>(`/species/${id}`, input),
+
   // breeds
   listBreeds: (q: ListParams) =>
     apiClient.get<PaginatedResult<Breed>>(`/breeds${toQuery(q)}`),

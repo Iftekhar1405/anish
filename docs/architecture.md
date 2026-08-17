@@ -90,21 +90,22 @@ PostgreSQL via **Prisma**. Money stored as **integer minor units** (never floats
 |---|-------|-----------|-------|
 | 1 | `farmers` | name, phone, password_hash, district_id, address, is_active | Farmer accounts |
 | 2 | `technicians` | name, phone, password_hash, service_area_id, is_active | Technician accounts |
-| 3 | `animals` | farmer_id, species, breed_id, tag, age, breeding_status | Livestock |
-| 4 | `sire_catalogue` | species, name, breed_id, organization_id, fertility_rating, disease_free, image_url, + cattle{genetic_score, milk_yield, fat_pct} / goat{growth_index} | Bull/Buck straws offered |
+| 3 | `animals` | farmer_id, species_id, breed_id, breed_other, tag, age, breeding_status | Livestock. `breed_other` is free text for a breed not in the master list — mutually exclusive with `breed_id` |
+| 4 | `sire_catalogue` | species_id, name, breed_id, organization_id, fertility_rating, disease_free, image_url, + cattle{genetic_score, milk_yield, fat_pct} / goat{growth_index} | Bull/Buck straws offered |
 | 5 | `batches` | sire_id, batch_number, produced_date, notes | Straw production batches |
 | 6 | `straws` (inventory_items) | batch_id, quantity_available, status | Per-batch stock |
 | 7 | `prices` | sire_id, amount_minor, currency, effective_from | Straw pricing |
 | 8 | `districts` | name, state, code | Geographic master |
 | 9 | `service_areas` | name, district_id, coverage | Technician coverage zones |
-| 10 | `breeds` | species, name, code | Referenced by animals + catalogue |
+| 10 | `breeds` | species_id, name, code | Referenced by animals + catalogue; unique per (species, name) |
 | 11 | `organizations` | name, code, contact | Referenced by catalogue |
+| 12 | `species` | name, code, metrics, is_active | Admin-managed; `metrics` (`DAIRY`/`MEAT`) decides which extra sire fields the catalogue asks for |
 
-**Species** is an enum (`CATTLE` / `GOAT`), not a table.
+**Species is a master table**, not an enum — an admin adds one from Masters → Species without a release (changed 2026-08-17; it was a `CATTLE`/`GOAT` enum until then, and the migration carried both values over as rows). Species are deactivated rather than deleted: an inactive species disappears from every picker but the animals, breeds and sires already recorded against it keep resolving.
 
 ### 5.2 Transactional & auth tables
 
-- `bookings` — status enum `PENDING/ASSIGNED/IN_PROGRESS/COMPLETED/CANCELLED`; relations to animal, farmer, straw/batch, technician (nullable), preferred_date.
+- `bookings` — status enum `PENDING/ASSIGNED/IN_PROGRESS/COMPLETED/CANCELLED`; relations to animal, farmer, straw/batch, technician (nullable), preferred_date, `location` (per-visit address, defaulting server-side to the farmer's profile address).
 - `breeding_history` — per animal; links booking + straw; populated on completion.
 - `notifications` — event/message records (notifications phase).
 - `refresh_tokens` — hashed refresh tokens (rotation + reuse detection).

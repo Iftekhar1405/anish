@@ -2,19 +2,18 @@ import { useState } from "react";
 import { View } from "react-native";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
-import { ApiError } from "@ai-platform/api-client";
+import { errorMessage } from "@ai-platform/api-client";
 import { Button, Dialog, Input, Select, Table, useToast } from "@ai-platform/ui";
 import {
   breedFormSchema,
-  SPECIES,
   type Breed,
   type BreedFormInput,
   type BreedFormValues,
 } from "@ai-platform/types";
-import { breeds } from "../../../src/features/masters/hooks";
+import { breeds, species } from "../../../src/features/masters/hooks";
 
 const PAGE_SIZE = 10;
-const speciesOptions = SPECIES.map((s) => ({ label: s, value: s }));
+const EMPTY_FORM: BreedFormInput = { speciesId: "", name: "", code: "" };
 
 export default function BreedsScreen() {
   const [search, setSearch] = useState("");
@@ -31,21 +30,26 @@ export default function BreedsScreen() {
   });
   const create = breeds.useCreate();
   const update = breeds.useUpdate();
+  const speciesQuery = species.useList({ pageSize: 100, isActive: true });
+  const speciesOptions = (speciesQuery.data?.items ?? []).map((s) => ({
+    label: s.name,
+    value: s.id,
+  }));
 
   const form = useForm<BreedFormInput, unknown, BreedFormValues>({
     resolver: zodResolver(breedFormSchema),
-    defaultValues: { species: "CATTLE", name: "", code: "" },
+    defaultValues: EMPTY_FORM,
   });
 
   function openCreate(): void {
-    form.reset({ species: "CATTLE", name: "", code: "" });
+    form.reset(EMPTY_FORM);
     setCreating(true);
   }
 
   function openEdit(row: Breed): void {
     setEditing(row);
     setActive(row.isActive);
-    form.reset({ species: row.species, name: row.name, code: row.code ?? "" });
+    form.reset({ speciesId: row.speciesId, name: row.name, code: row.code ?? "" });
   }
 
   const onSubmit = form.handleSubmit(async (values) => {
@@ -59,7 +63,7 @@ export default function BreedsScreen() {
         setEditing(null);
       } else {
         await create.mutateAsync({
-          species: values.species,
+          speciesId: values.speciesId,
           name: values.name,
           code: values.code,
         });
@@ -67,10 +71,7 @@ export default function BreedsScreen() {
         setCreating(false);
       }
     } catch (err) {
-      toast.show(
-        err instanceof ApiError ? err.message : "Could not save breed",
-        "error",
-      );
+      toast.show(errorMessage(err, "Could not save breed"), "error");
     }
   });
 
@@ -97,7 +98,7 @@ export default function BreedsScreen() {
       <Table<Breed>
         columns={[
           { key: "name", header: "Name", accessor: (r) => r.name },
-          { key: "species", header: "Species", accessor: (r) => r.species },
+          { key: "species", header: "Species", accessor: (r) => r.species?.name },
           { key: "code", header: "Code", hideOnMobile: true, accessor: (r) => r.code },
           {
             key: "status",
@@ -136,15 +137,18 @@ export default function BreedsScreen() {
         <View className="gap-3">
           <Controller
             control={form.control}
-            name="species"
+            name="speciesId"
             render={({ field }) => (
               <Select
                 label="Species"
-                value={field.value}
+                placeholder={
+                  speciesQuery.isLoading ? "Loading species…" : "Select a species"
+                }
+                value={field.value || null}
                 options={speciesOptions}
                 onChange={field.onChange}
                 disabled={editing !== null}
-                error={form.formState.errors.species?.message}
+                error={form.formState.errors.speciesId?.message}
               />
             )}
           />

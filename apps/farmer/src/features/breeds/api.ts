@@ -1,8 +1,8 @@
-import type { Breed, PaginatedResult, Species } from "@ai-platform/types";
+import type { Breed, PaginatedResult } from "@ai-platform/types";
 import { apiClient } from "../../lib/api";
 import { toQuery } from "../../lib/query";
 
 export const breedsApi = {
-  list: (q: { species?: Species; pageSize?: number }) =>
+  list: (q: { speciesId?: string; pageSize?: number }) =>
     apiClient.get<PaginatedResult<Breed>>(`/breeds${toQuery(q)}`),
 };

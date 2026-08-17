@@ -1,4 +1,4 @@
-import type { AnimalBreedingStatus, Species } from "./masters";
+import type { AnimalBreedingStatus } from "./masters";
 import type { BookingStatus } from "./bookings";
 
 export interface DateRangeQuery {
@@ -9,7 +9,7 @@ export interface DateRangeQuery {
 export interface SireBreakdown {
   sireId: string;
   sireName: string;
-  species: Species;
+  species: string;
   quantityTotal: number;
   quantityAvailable: number;
   quantityUsed: number;
@@ -48,7 +48,7 @@ export interface TechnicianPerformanceEntry {
 }
 
 export interface ConceptionReportQuery {
-  species?: Species;
+  speciesId?: string;
   breedId?: string;
 }
 

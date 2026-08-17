@@ -5,67 +5,68 @@ import { Controller, useForm } from "react-hook-form";
 import { errorMessage } from "@ai-platform/api-client";
 import { Button, Dialog, Input, Select, Table, useToast } from "@ai-platform/ui";
 import {
-  organizationFormSchema,
-  type Organization,
-  type OrganizationFormInput,
-  type OrganizationFormValues,
+  speciesFormSchema,
+  SPECIES_METRICS,
+  SPECIES_METRICS_LABELS,
+  type Species,
+  type SpeciesFormInput,
+  type SpeciesFormValues,
 } from "@ai-platform/types";
-import { organizations } from "../../../src/features/masters/hooks";
+import { species } from "../../../src/features/masters/hooks";
 
 const PAGE_SIZE = 10;
+const metricsOptions = SPECIES_METRICS.map((m) => ({
+  label: SPECIES_METRICS_LABELS[m],
+  value: m,
+}));
 
-export default function OrganizationsScreen() {
+const EMPTY_FORM: SpeciesFormInput = { name: "", code: "", metrics: "DAIRY" };
+
+export default function SpeciesScreen() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [creating, setCreating] = useState(false);
-  const [editing, setEditing] = useState<Organization | null>(null);
+  const [editing, setEditing] = useState<Species | null>(null);
   const [active, setActive] = useState(true);
   const toast = useToast();
 
-  const query = organizations.useList({
+  const query = species.useList({
     page,
     pageSize: PAGE_SIZE,
     search: search || undefined,
   });
-  const create = organizations.useCreate();
-  const update = organizations.useUpdate();
+  const create = species.useCreate();
+  const update = species.useUpdate();
 
-  const form = useForm<OrganizationFormInput, unknown, OrganizationFormValues>({
-    resolver: zodResolver(organizationFormSchema),
-    defaultValues: { name: "", code: "", contact: "" },
+  const form = useForm<SpeciesFormInput, unknown, SpeciesFormValues>({
+    resolver: zodResolver(speciesFormSchema),
+    defaultValues: EMPTY_FORM,
   });
 
   function openCreate(): void {
-    form.reset({ name: "", code: "", contact: "" });
+    form.reset(EMPTY_FORM);
     setCreating(true);
   }
 
-  function openEdit(row: Organization): void {
+  function openEdit(row: Species): void {
     setEditing(row);
     setActive(row.isActive);
-    form.reset({
-      name: row.name,
-      code: row.code ?? "",
-      contact: row.contact ?? "",
-    });
+    form.reset({ name: row.name, code: row.code ?? "", metrics: row.metrics });
   }
 
   const onSubmit = form.handleSubmit(async (values) => {
     try {
       if (editing) {
-        await update.mutateAsync({
-          id: editing.id,
-          input: { ...values, isActive: active },
-        });
-        toast.show("Organization updated", "success");
+        await update.mutateAsync({ id: editing.id, input: { ...values, isActive: active } });
+        toast.show("Species updated", "success");
         setEditing(null);
       } else {
         await create.mutateAsync(values);
-        toast.show("Organization created", "success");
+        toast.show("Species created", "success");
         setCreating(false);
       }
     } catch (err) {
-      toast.show(errorMessage(err, "Could not save organization"), "error");
+      toast.show(errorMessage(err, "Could not save species"), "error");
     }
   });
 
@@ -74,7 +75,7 @@ export default function OrganizationsScreen() {
       <View className="flex-row gap-2">
         <View className="flex-1">
           <Input
-            placeholder="Search organizations"
+            placeholder="Search species"
             value={search}
             onChangeText={(t) => {
               setSearch(t);
@@ -87,11 +88,15 @@ export default function OrganizationsScreen() {
         </Button>
       </View>
 
-      <Table<Organization>
+      <Table<Species>
         columns={[
           { key: "name", header: "Name", accessor: (r) => r.name },
-          { key: "code", header: "Code", accessor: (r) => r.code },
-          { key: "contact", header: "Contact", hideOnMobile: true, accessor: (r) => r.contact },
+          { key: "code", header: "Code", hideOnMobile: true, accessor: (r) => r.code },
+          {
+            key: "metrics",
+            header: "Sire details",
+            accessor: (r) => (r.metrics === "DAIRY" ? "Dairy" : "Meat"),
+          },
           {
             key: "status",
             header: "Status",
@@ -101,10 +106,10 @@ export default function OrganizationsScreen() {
         data={query.data?.items ?? []}
         keyExtractor={(r) => r.id}
         loading={query.isLoading}
-        error={query.isError ? "Couldn't load organizations." : undefined}
+        error={query.isError ? "Couldn't load species." : undefined}
         onRetry={() => query.refetch()}
-        emptyTitle="No organizations yet"
-        emptyDescription="Add semen suppliers and partner organizations."
+        emptyTitle="No species yet"
+        emptyDescription="Add the animals you serve — cattle, goats, and anything else."
         page={page}
         pageCount={query.data?.pageCount ?? 1}
         onPageChange={setPage}
@@ -117,7 +122,8 @@ export default function OrganizationsScreen() {
 
       <Dialog
         visible={creating || editing !== null}
-        title={editing ? "Edit organization" : "Add organization"}
+        title={editing ? "Edit species" : "Add species"}
+        description="Species drive the breed list, the catalogue and every animal record."
         confirmLabel={editing ? "Save" : "Create"}
         loading={create.isPending || update.isPending}
         onConfirm={onSubmit}
@@ -133,6 +139,8 @@ export default function OrganizationsScreen() {
             render={({ field }) => (
               <Input
                 label="Name"
+                placeholder="Buffalo"
+                autoCapitalize="words"
                 value={field.value}
                 onChangeText={field.onChange}
                 error={form.formState.errors.name?.message}
@@ -154,23 +162,27 @@ export default function OrganizationsScreen() {
           />
           <Controller
             control={form.control}
-            name="contact"
+            name="metrics"
             render={({ field }) => (
-              <Input
-                label="Contact (optional)"
-                value={field.value ?? ""}
-                onChangeText={field.onChange}
-                error={form.formState.errors.contact?.message}
+              <Select
+                label="Extra sire details"
+                value={field.value}
+                options={metricsOptions}
+                onChange={field.onChange}
+                error={form.formState.errors.metrics?.message}
               />
             )}
           />
           {editing ? (
             <Select
               label="Status"
+              // Deactivating hides a species from the pickers; the animals,
+              // breeds and sires already recorded against it are untouched,
+              // which is why there's no delete.
               value={active ? "active" : "inactive"}
               options={[
                 { label: "Active", value: "active" },
-                { label: "Inactive", value: "inactive" },
+                { label: "Inactive — hidden from new records", value: "inactive" },
               ]}
               onChange={(v) => setActive(v === "active")}
             />

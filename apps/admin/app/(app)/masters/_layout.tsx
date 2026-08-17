@@ -10,6 +10,7 @@ export default function MastersLayout() {
       }}
     >
       <Stack.Screen name="index" options={{ title: "Master Data" }} />
+      <Stack.Screen name="species" options={{ title: "Species" }} />
       <Stack.Screen name="breeds" options={{ title: "Breeds" }} />
       <Stack.Screen name="organizations" options={{ title: "Organizations" }} />
       <Stack.Screen name="districts" options={{ title: "Districts" }} />

@@ -2,7 +2,7 @@ import { Text, View } from "react-native";
 import { useRouter, type Href } from "expo-router";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
-import { ApiError } from "@ai-platform/api-client";
+import { errorMessage } from "@ai-platform/api-client";
 import {
   Button,
   Card,
@@ -52,10 +52,7 @@ export default function ProfileScreen() {
       await update.mutateAsync(values);
       toast.show("Profile updated", "success");
     } catch (err) {
-      toast.show(
-        err instanceof ApiError ? err.message : "Could not update profile",
-        "error",
-      );
+      toast.show(errorMessage(err, "Could not update profile"), "error");
     }
   });
 

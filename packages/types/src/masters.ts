@@ -2,8 +2,14 @@ import { z } from "zod";
 
 /* ------------------------------------------------------------------ enums */
 
-export const SPECIES = ["CATTLE", "GOAT"] as const;
-export type Species = (typeof SPECIES)[number];
+/** Which extra sire details a species has — set per species by the admin. */
+export const SPECIES_METRICS = ["DAIRY", "MEAT"] as const;
+export type SpeciesMetrics = (typeof SPECIES_METRICS)[number];
+
+export const SPECIES_METRICS_LABELS: Record<SpeciesMetrics, string> = {
+  DAIRY: "Dairy — genetic score, milk yield, fat %",
+  MEAT: "Meat — growth index",
+};
 
 export const FERTILITY_RATINGS = ["LOW", "MEDIUM", "HIGH"] as const;
 export type FertilityRating = (typeof FERTILITY_RATINGS)[number];
@@ -18,9 +24,31 @@ export type AnimalBreedingStatus = (typeof ANIMAL_BREEDING_STATUSES)[number];
 
 /* --------------------------------------------------------------- entities */
 
+/**
+ * Admin-managed species (Cattle, Goat, …). Was a fixed enum; it's a master
+ * list so an admin can add one without a release.
+ */
+export interface Species {
+  id: string;
+  name: string;
+  code: string | null;
+  metrics: SpeciesMetrics;
+  isActive: boolean;
+  createdAt: string;
+}
+
+/** How a species is embedded in the rows that reference it. */
+export interface SpeciesRef {
+  id: string;
+  name: string;
+  code?: string | null;
+  metrics?: SpeciesMetrics;
+}
+
 export interface Breed {
   id: string;
-  species: Species;
+  speciesId: string;
+  species?: SpeciesRef | null;
   name: string;
   code: string | null;
   isActive: boolean;
@@ -55,10 +83,11 @@ export interface ServiceArea {
 
 export interface Sire {
   id: string;
-  species: Species;
+  speciesId: string;
+  species?: SpeciesRef | null;
   name: string;
   breedId: string;
-  breed?: { id: string; name: string; species: Species } | null;
+  breed?: { id: string; name: string; speciesId: string } | null;
   organizationId: string | null;
   organization?: { id: string; name: string } | null;
   fertilityRating: FertilityRating;
@@ -77,7 +106,7 @@ export interface Sire {
 export interface Batch {
   id: string;
   sireId: string;
-  sire?: { id: string; name: string; species: Species } | null;
+  sire?: { id: string; name: string; species?: SpeciesRef | null } | null;
   batchNumber: string;
   producedOn: string | null;
   notes: string | null;
@@ -94,7 +123,9 @@ export interface BreedingHistoryEntry {
   notes: string | null;
   createdAt: string;
   booking?: {
-    batch?: { sire?: { id: string; name: string; species: Species } | null } | null;
+    batch?: {
+      sire?: { id: string; name: string; species?: SpeciesRef | null } | null;
+    } | null;
   } | null;
 }
 
@@ -102,9 +133,10 @@ export interface Animal {
   id: string;
   farmerId: string;
   farmer?: { id: string; name: string; phone: string } | null;
-  species: Species;
+  speciesId: string;
+  species?: SpeciesRef | null;
   breedId: string | null;
-  breed?: { id: string; name: string; species: Species } | null;
+  breed?: { id: string; name: string; speciesId: string } | null;
   /** Free-text breed, used when the breed isn't in the master list. */
   breedOther: string | null;
   tag: string;
@@ -120,7 +152,7 @@ export interface ListSiresQuery {
   page?: number;
   pageSize?: number;
   search?: string;
-  species?: Species;
+  speciesId?: string;
   breedId?: string;
 }
 
@@ -136,7 +168,7 @@ export interface ListAnimalsQuery {
   pageSize?: number;
   search?: string;
   farmerId?: string;
-  species?: Species;
+  speciesId?: string;
   breedingStatus?: AnimalBreedingStatus;
 }
 
@@ -192,15 +224,24 @@ const requiredIntText = (label: string, max = 1_000_000) =>
     )
     .transform((v) => Number(v));
 
-const speciesSchema = z.enum(SPECIES);
+const speciesIdSchema = z.string().min(1, "Species is required");
 const fertilitySchema = z.enum(FERTILITY_RATINGS);
 const breedingStatusSchema = z.enum(ANIMAL_BREEDING_STATUSES);
 
 /* ----------------------------------------------------------- form schemas */
 
+// Species
+export const speciesFormSchema = z.object({
+  name: requiredText("Name", 60),
+  code: optionalText(20),
+  metrics: z.enum(SPECIES_METRICS),
+});
+export type SpeciesFormInput = z.input<typeof speciesFormSchema>;
+export type SpeciesFormValues = z.output<typeof speciesFormSchema>;
+
 // Breed
 export const breedFormSchema = z.object({
-  species: speciesSchema,
+  speciesId: speciesIdSchema,
   name: requiredText("Name"),
   code: optionalText(20),
 });
@@ -235,7 +276,7 @@ export type ServiceAreaFormValues = z.output<typeof serviceAreaFormSchema>;
 
 // Sire (catalogue)
 export const sireFormSchema = z.object({
-  species: speciesSchema,
+  speciesId: speciesIdSchema,
   name: requiredText("Name"),
   breedId: z.string().min(1, "Breed is required"),
   organizationId: z.string().optional().transform((v) => (v ? v : undefined)),
@@ -313,7 +354,7 @@ function transformBreedChoice<T extends { breedId?: string; breedOther?: string 
 export const animalFormSchema = z
   .object({
     farmerId: z.string().min(1, "Farmer is required"),
-    species: speciesSchema,
+    speciesId: speciesIdSchema,
     ...breedChoiceFields,
     tag: z.string().trim().min(1, "Tag / number / name is required").max(60),
     ageMonths: optionalIntText("Age (months)", 600),
@@ -328,7 +369,7 @@ export type AnimalFormValues = z.output<typeof animalFormSchema>;
 // server-resolved or system-managed rather than farmer-editable).
 export const farmerAnimalFormSchema = z
   .object({
-    species: speciesSchema,
+    speciesId: speciesIdSchema,
     ...breedChoiceFields,
     tag: z.string().trim().min(1, "Tag / number / name is required").max(60),
     ageMonths: optionalIntText("Age (months)", 600),

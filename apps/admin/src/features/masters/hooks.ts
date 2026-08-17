@@ -21,6 +21,8 @@ import {
   type ServiceAreaUpdate,
   type SireCreate,
   type SireUpdate,
+  type SpeciesCreate,
+  type SpeciesUpdate,
 } from "./api";
 
 interface CrudApi<T, LQ, C, U> {
@@ -57,6 +59,17 @@ function makeCrudHooks<T, LQ, C, U>(key: string, api: CrudApi<T, LQ, C, U>) {
 
   return { useList, useCreate, useUpdate };
 }
+
+export const species = makeCrudHooks<
+  Awaited<ReturnType<typeof mastersApi.listSpecies>>["items"][number],
+  Parameters<typeof mastersApi.listSpecies>[0],
+  SpeciesCreate,
+  SpeciesUpdate
+>("species", {
+  list: mastersApi.listSpecies,
+  create: mastersApi.createSpecies,
+  update: mastersApi.updateSpecies,
+});
 
 export const breeds = makeCrudHooks<
   Awaited<ReturnType<typeof mastersApi.listBreeds>>["items"][number],

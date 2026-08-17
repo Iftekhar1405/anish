@@ -2,14 +2,11 @@ import { useState } from "react";
 import { FlatList, Image, Text, View } from "react-native";
 import { Milk } from "lucide-react-native";
 import { Card, EmptyState, Input, Select, Skeleton } from "@ai-platform/ui";
-import { SPECIES, type Sire } from "@ai-platform/types";
+import type { Sire } from "@ai-platform/types";
 import { useSires } from "../../src/features/catalogue/hooks";
+import { useSpecies } from "../../src/features/species/hooks";
 
 const PAGE_SIZE = 20;
-const speciesFilterOptions = [
-  { label: "All species", value: "" },
-  ...SPECIES.map((s) => ({ label: s, value: s })),
-];
 
 function formatPrice(minor: number): string {
   return `₹${(minor / 100).toFixed(2)}`;
@@ -17,12 +14,18 @@ function formatPrice(minor: number): string {
 
 export default function CatalogueScreen() {
   const [search, setSearch] = useState("");
-  const [species, setSpecies] = useState<string>("");
+  const [speciesId, setSpeciesId] = useState<string>("");
+
+  const speciesQuery = useSpecies();
+  const speciesFilterOptions = [
+    { label: "All species", value: "" },
+    ...(speciesQuery.data?.items ?? []).map((s) => ({ label: s.name, value: s.id })),
+  ];
 
   const query = useSires({
     pageSize: PAGE_SIZE,
     search: search || undefined,
-    species: species ? (species as Sire["species"]) : undefined,
+    speciesId: speciesId || undefined,
   });
 
   const items = query.data?.items ?? [];
@@ -32,9 +35,9 @@ export default function CatalogueScreen() {
       <Input placeholder="Search bulls & bucks" value={search} onChangeText={setSearch} />
       <Select
         label="Species"
-        value={species}
+        value={speciesId}
         options={speciesFilterOptions}
-        onChange={setSpecies}
+        onChange={setSpeciesId}
       />
 
       {query.isLoading ? (
@@ -93,7 +96,7 @@ function SireCard({ sire }: { sire: Sire }) {
           </View>
         </View>
         <Text className="text-sm text-neutral-500">
-          {sire.species} · {sire.breed?.name ?? "Unknown breed"}
+          {sire.species?.name} · {sire.breed?.name ?? "Unknown breed"}
         </Text>
         <Text className="text-sm font-medium text-neutral-900">
           {formatPrice(sire.strawPriceMinor)} per straw

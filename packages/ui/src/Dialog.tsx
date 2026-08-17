@@ -60,10 +60,10 @@ export function Dialog({
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
-      <KeyboardAvoidingView
-        className="flex-1"
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-      >
+      {/* `padding` on Android too, not just iOS: with edge-to-edge the window
+          no longer resizes when the keyboard opens, so leaving Android to
+          `adjustResize` left the keyboard sitting over the dialog's fields. */}
+      <KeyboardAvoidingView className="flex-1" behavior="padding">
         <Pressable
           className={cn("flex-1 bg-black/40", isWeb ? "items-center justify-center" : "justify-end")}
           onPress={onCancel}
