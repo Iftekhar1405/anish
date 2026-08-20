@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Text, View } from "react-native";
 import { useRouter, type Href } from "expo-router";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -6,6 +7,7 @@ import { errorMessage } from "@ai-platform/api-client";
 import {
   Button,
   Card,
+  Dialog,
   Input,
   KeyboardScreen,
   Select,
@@ -19,7 +21,11 @@ import {
 } from "@ai-platform/types";
 import { useAuth } from "../../src/auth/AuthProvider";
 import { useDistricts } from "../../src/features/districts/hooks";
-import { useMyProfile, useUpdateMyProfile } from "../../src/features/profile/hooks";
+import {
+  useDeleteMyAccount,
+  useMyProfile,
+  useUpdateMyProfile,
+} from "../../src/features/profile/hooks";
 
 export default function ProfileScreen() {
   const { user, logout } = useAuth();
@@ -28,6 +34,9 @@ export default function ProfileScreen() {
   const districtsQuery = useDistricts();
   const update = useUpdateMyProfile();
   const toast = useToast();
+  const removeAccount = useDeleteMyAccount();
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const form = useForm<UpdateProfileFormInput, unknown, UpdateProfileFormValues>({
     resolver: zodResolver(updateProfileFormSchema),
@@ -55,6 +64,19 @@ export default function ProfileScreen() {
       toast.show(errorMessage(err, "Could not update profile"), "error");
     }
   });
+
+  const onDelete = async () => {
+    setDeleteError(null);
+    try {
+      await removeAccount.mutateAsync();
+      setConfirmDelete(false);
+      // The server has already revoked every refresh token, so this is just
+      // the local teardown — it clears storage and routes back to login.
+      await logout();
+    } catch (err) {
+      setDeleteError(errorMessage(err, "Could not delete your account"));
+    }
+  };
 
   return (
     <KeyboardScreen className="bg-neutral-50" contentContainerClassName="gap-4 p-4">
@@ -123,6 +145,45 @@ export default function ProfileScreen() {
       >
         Log out
       </Button>
+
+      <Card className="gap-3 border border-error/40">
+        <Text className="text-base font-semibold text-neutral-900">
+          Delete my account
+        </Text>
+        <Text className="text-sm text-neutral-500">
+          Erases your name, phone number and address, cancels any visit that
+          hasn’t happened yet, and signs you out everywhere. Completed
+          insemination records stay with the service as breeding history, with
+          your details removed from them.
+        </Text>
+        <Button
+          variant="destructive"
+          onPress={() => {
+            setDeleteError(null);
+            setConfirmDelete(true);
+          }}
+        >
+          Delete my account
+        </Button>
+      </Card>
+
+      <Dialog
+        visible={confirmDelete}
+        title="Delete your account?"
+        description="This cannot be undone. You can register again later with the same phone number, but your animals and past bookings will not come back to the new account."
+        confirmLabel="Delete account"
+        cancelLabel="Keep my account"
+        destructive
+        loading={removeAccount.isPending}
+        error={deleteError}
+        onConfirm={() => {
+          void onDelete();
+        }}
+        onCancel={() => {
+          setConfirmDelete(false);
+          setDeleteError(null);
+        }}
+      />
     </KeyboardScreen>
   );
 }

@@ -8,16 +8,13 @@
     "scheme": "admin",
     "userInterfaceStyle": "automatic",
     "android": {
-      "package": "com.anish.admin",
+      "package": "solutions.irad.gbc.admin",
       "versionCode": 1,
       "adaptiveIcon": {
         "backgroundColor": "#FFFFFF",
         "foregroundImage": "./assets/images/android-icon-foreground.png"
       },
-      "predictiveBackGestureEnabled": false,
-      "permissions": [
-        "android.permission.RECORD_AUDIO"
-      ]
+      "predictiveBackGestureEnabled": false
     },
     "web": {
       "output": "static",

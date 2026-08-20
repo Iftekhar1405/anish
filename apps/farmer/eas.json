@@ -24,9 +24,6 @@
       }
     },
     "production": {
-      "android": {
-        "buildType": "apk"
-      },
       "env": {
         "EXPO_PUBLIC_API_BASE_URL": "https://anish-server.vercel.app/api/v1"
       }

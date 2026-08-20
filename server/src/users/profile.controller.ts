@@ -1,4 +1,13 @@
-import { Body, Controller, Get, Patch, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Patch,
+  UseGuards,
+} from '@nestjs/common';
 import { Role } from '@prisma/client';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -23,5 +32,17 @@ export class ProfileController {
   @Patch('me')
   update(@Body() dto: UpdateProfileDto, @CurrentUser() user: JwtPayload) {
     return this.users.updateOwnProfile(user.sub, dto);
+  }
+
+  /**
+   * Farmer-initiated account deletion — required by Google Play for any app
+   * that offers in-app registration. Anonymises the account and ends every
+   * session; the service history the operator must keep is retained without
+   * the farmer's identity attached to it.
+   */
+  @Delete('me')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async remove(@CurrentUser() user: JwtPayload): Promise<void> {
+    await this.users.deleteOwnAccount(user.sub);
   }
 }

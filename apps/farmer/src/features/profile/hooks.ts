@@ -18,3 +18,13 @@ export function useUpdateMyProfile() {
     onSuccess: () => qc.invalidateQueries({ queryKey: [KEY] }),
   });
 }
+
+/**
+ * Account deletion. No cache invalidation on purpose: the caller logs the
+ * user straight out, so every query is torn down with the session.
+ */
+export function useDeleteMyAccount() {
+  return useMutation({
+    mutationFn: () => profileApi.deleteAccount(),
+  });
+}

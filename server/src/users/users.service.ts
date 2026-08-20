@@ -3,9 +3,9 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma, Role } from '@prisma/client';
+import { BookingStatus, Prisma, Role } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { hashPassword } from '../common/crypto.util';
+import { hashPassword, randomToken } from '../common/crypto.util';
 import { ListUsersQueryDto } from './dto/list-users-query.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
@@ -144,6 +144,73 @@ export class UsersService {
         ...(dto.districtId !== undefined ? { districtId: dto.districtId } : {}),
       },
       select: userSelect,
+    });
+  }
+
+  /**
+   * Farmer-initiated account deletion. Google Play requires an in-app path for
+   * any app that lets users create an account, so this is what the farmer app's
+   * "Delete my account" button calls.
+   *
+   * The row is anonymised, not dropped. Bookings and breeding history are the
+   * operator's service records — `Booking.farmerId` is `onDelete: Restrict`
+   * precisely so a recorded insemination can never lose its trail, and the
+   * straw inventory decremented against those visits has to stay auditable. So
+   * we strip every identifier, destroy every credential and session, and leave
+   * the service history pointing at an anonymous farmer. What we retain is
+   * disclosed on the public deletion page linked from the Play listing.
+   */
+  async deleteOwnAccount(userId: string): Promise<void> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true },
+    });
+    if (!user) throw new NotFoundException('User not found');
+
+    // Hashing is deliberately outside the transaction — it's the slowest step
+    // here and holding a DB transaction open for it buys nothing.
+    const deadPasswordHash = await hashPassword(randomToken());
+
+    await this.prisma.$transaction(async (tx) => {
+      // Nobody should be left holding a scheduled visit for an account that no
+      // longer exists. Straws are only decremented on completion, so cancelling
+      // an open booking has no inventory side effect.
+      await tx.booking.updateMany({
+        where: {
+          farmerId: userId,
+          status: {
+            in: [
+              BookingStatus.PENDING,
+              BookingStatus.ASSIGNED,
+              BookingStatus.IN_PROGRESS,
+            ],
+          },
+        },
+        data: { status: BookingStatus.CANCELLED },
+      });
+      // Animals stay for the breeding history that references them, but they
+      // drop out of every picker and list.
+      await tx.animal.updateMany({
+        where: { farmerId: userId },
+        data: { isActive: false },
+      });
+      await tx.refreshToken.deleteMany({ where: { userId } });
+      await tx.deviceToken.deleteMany({ where: { userId } });
+      await tx.notification.deleteMany({ where: { userId } });
+      await tx.user.update({
+        where: { id: userId },
+        data: {
+          // `@@unique([phone, role])` means the placeholder must still be
+          // unique — and using the id frees the real number, so the same person
+          // can register again later with a clean account.
+          phone: `deleted-${userId}`,
+          name: 'Deleted account',
+          address: null,
+          districtId: null,
+          passwordHash: deadPasswordHash,
+          isActive: false,
+        },
+      });
     });
   }
 

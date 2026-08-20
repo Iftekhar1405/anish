@@ -8,7 +8,7 @@
     "scheme": "farmer",
     "userInterfaceStyle": "automatic",
     "android": {
-      "package": "com.anish.farmer",
+      "package": "solutions.irad.gbc.farmer",
       "versionCode": 1,
       "adaptiveIcon": {
         "backgroundColor": "#FFFFFF",

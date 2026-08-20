@@ -8,7 +8,7 @@
     "scheme": "technician",
     "userInterfaceStyle": "automatic",
     "android": {
-      "package": "com.anish.technician",
+      "package": "solutions.irad.gbc.technician",
       "versionCode": 1,
       "adaptiveIcon": {
         "backgroundColor": "#FFFFFF",
