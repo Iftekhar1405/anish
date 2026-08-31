@@ -1,0 +1,67 @@
+{
+  "project_info": {
+    "project_number": "795849115408",
+    "project_id": "solutions-irad-gbc",
+    "storage_bucket": "solutions-irad-gbc.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:795849115408:android:56d4f6e453c01c9472c795",
+        "android_client_info": {
+          "package_name": "com.aiplatform.admin"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDH1sYFRDOspHl4lrAxIAgShnDBdhAH0E8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:795849115408:android:01df3aed40763f0872c795",
+        "android_client_info": {
+          "package_name": "com.aiplatform.farmer"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDH1sYFRDOspHl4lrAxIAgShnDBdhAH0E8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:795849115408:android:dc61b849f8eea54672c795",
+        "android_client_info": {
+          "package_name": "com.aiplatform.technician"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDH1sYFRDOspHl4lrAxIAgShnDBdhAH0E8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
