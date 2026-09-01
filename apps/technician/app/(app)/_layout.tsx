@@ -3,14 +3,19 @@ import { Redirect, Tabs, type Href } from "expo-router";
 import { CalendarClock, ClipboardList, User } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "../../src/auth/AuthProvider";
-import { registerForPushNotifications } from "../../src/notifications/registerPush";
+import {
+  configureNotificationDisplay,
+  registerForPushNotifications,
+} from "../../src/notifications/registerPush";
 
 export default function AppLayout() {
   const { status } = useAuth();
   const insets = useSafeAreaInsets();
 
   useEffect(() => {
-    if (status === "authed") void registerForPushNotifications();
+    if (status !== "authed") return;
+    void configureNotificationDisplay();
+    void registerForPushNotifications();
   }, [status]);
 
   if (status === "loading") return null;
