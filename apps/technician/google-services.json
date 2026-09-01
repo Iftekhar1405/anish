@@ -7,9 +7,9 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:795849115408:android:56d4f6e453c01c9472c795",
+        "mobilesdk_app_id": "1:795849115408:android:6f3e48644453074572c795",
         "android_client_info": {
-          "package_name": "com.aiplatform.admin"
+          "package_name": "solutions.irad.gbc.admin"
         }
       },
       "oauth_client": [],
@@ -26,9 +26,9 @@
     },
     {
       "client_info": {
-        "mobilesdk_app_id": "1:795849115408:android:01df3aed40763f0872c795",
+        "mobilesdk_app_id": "1:795849115408:android:2ad7827ed882f1bb72c795",
         "android_client_info": {
-          "package_name": "com.aiplatform.farmer"
+          "package_name": "solutions.irad.gbc.farmer"
         }
       },
       "oauth_client": [],
@@ -45,9 +45,9 @@
     },
     {
       "client_info": {
-        "mobilesdk_app_id": "1:795849115408:android:dc61b849f8eea54672c795",
+        "mobilesdk_app_id": "1:795849115408:android:9444046966cd51ac72c795",
         "android_client_info": {
-          "package_name": "com.aiplatform.technician"
+          "package_name": "solutions.irad.gbc.technician"
         }
       },
       "oauth_client": [],
