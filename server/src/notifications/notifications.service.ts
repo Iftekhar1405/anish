@@ -156,6 +156,13 @@ export class NotificationsService implements OnModuleInit {
         tokens: tokens.map((t) => t.token),
         notification: { title: notification.title, body: notification.body },
         data: notification.bookingId ? { bookingId: notification.bookingId } : {},
+        // Android 8+ drops a notification whose channel doesn't exist, so this
+        // id must match the channel the apps create at startup. 'high' keeps
+        // delivery prompt when the device is dozing.
+        android: {
+          priority: 'high',
+          notification: { channelId: 'default' },
+        },
       });
     } catch (err) {
       this.logger.warn(`Failed to push notification ${notification.id}: ${String(err)}`);
